@@ -32,6 +32,7 @@ import android.os.Looper
 import android.os.ParcelUuid
 import androidx.core.content.ContextCompat
 import java.nio.charset.StandardCharsets
+import java.util.UUID
 
 class BlePeerCoordinator(
     private val context: Context,
@@ -47,8 +48,22 @@ class BlePeerCoordinator(
         fun onStopReflectorRequested()
         fun onReflectorReady(reflectorAddress: String)
         fun onReflectorError(message: String)
+
+        /* Initiator가 GATT로 보낸 거리값을 Reflector에서 수신 */
+        fun onRemoteDistance(
+            rawMeters: Double,
+            smoothedMeters: Double,
+            sampleCount: Int
+        )
+
         fun onDisconnected()
     }
+
+    private data class PendingWrite(
+        val characteristic: BluetoothGattCharacteristic,
+        val value: ByteArray,
+        val description: String
+    )
 
     private val bluetoothManager =
         context.getSystemService(BluetoothManager::class.java)
@@ -58,12 +73,21 @@ class BlePeerCoordinator(
 
     private var selectedDevice: BluetoothDevice? = null
 
+    /* Initiator 쪽 GATT client */
     private var clientGatt: BluetoothGatt? = null
     private var controlCharacteristic: BluetoothGattCharacteristic? = null
     private var statusCharacteristic: BluetoothGattCharacteristic? = null
+    private var distanceCharacteristic: BluetoothGattCharacteristic? = null
+
     private var serviceDiscoveryRequested = false
     private var pendingDiscoveryRunnable: Runnable? = null
 
+    /* GATT write는 한 번에 하나씩 실행해야 하므로 직렬화 큐 사용 */
+    private val writeLock = Any()
+    private val writeQueue = ArrayDeque<PendingWrite>()
+    private var currentWrite: PendingWrite? = null
+
+    /* Reflector 쪽 GATT server */
     private var gattServer: BluetoothGattServer? = null
     private var serverStatusCharacteristic: BluetoothGattCharacteristic? = null
     private var serverConnectedDevice: BluetoothDevice? = null
@@ -77,10 +101,6 @@ class BlePeerCoordinator(
 
         val filter = IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED)
 
-        /*
-         * Bluetooth의 bond 상태 브로드캐스트는 시스템의 Bluetooth 프로세스에서 옵니다.
-         * 따라서 RECEIVER_NOT_EXPORTED가 아니라 RECEIVER_EXPORTED로 등록합니다.
-         */
         ContextCompat.registerReceiver(
             context,
             bondReceiver,
@@ -170,33 +190,54 @@ class BlePeerCoordinator(
         )
     }
 
-    @SuppressLint("MissingPermission")
     fun requestStartFromReflector() {
-        val gatt = clientGatt ?: run {
-            listener.onReflectorError("GATT 연결이 없습니다.")
-            return
-        }
-
         val characteristic = controlCharacteristic ?: run {
             listener.onReflectorError("Control characteristic가 준비되지 않았습니다.")
             return
         }
 
-        if (writeCharacteristic(gatt, characteristic, CsProtocol.START)) {
-            listener.onLog("Reflector에 START 요청")
-        } else {
-            listener.onReflectorError("Reflector START 쓰기 요청이 즉시 거부되었습니다.")
-        }
+        enqueueWrite(
+            characteristic = characteristic,
+            value = CsProtocol.START.toByteArray(StandardCharsets.UTF_8),
+            description = "START"
+        )
+
+        listener.onLog("Reflector에 START 요청 예약")
     }
 
-    @SuppressLint("MissingPermission")
     fun requestStopFromReflector() {
-        val gatt = clientGatt ?: return
         val characteristic = controlCharacteristic ?: return
 
-        if (writeCharacteristic(gatt, characteristic, CsProtocol.STOP)) {
-            listener.onLog("Reflector에 STOP 요청")
-        }
+        enqueueWrite(
+            characteristic = characteristic,
+            value = CsProtocol.STOP.toByteArray(StandardCharsets.UTF_8),
+            description = "STOP"
+        )
+    }
+
+    /*
+     * Initiator가 RangingData.distance를 받은 뒤 호출합니다.
+     * 아직 전송되지 않은 거리 패킷은 가장 최신 값 하나만 유지해 backlog를 막습니다.
+     */
+    fun sendDistanceToReflector(
+        rawMeters: Double,
+        smoothedMeters: Double,
+        sampleCount: Int
+    ) {
+        val characteristic = distanceCharacteristic ?: return
+
+        val packet = CsProtocol.encodeDistance(
+            rawMeters = rawMeters,
+            smoothedMeters = smoothedMeters,
+            sampleCount = sampleCount
+        )
+
+        enqueueWrite(
+            characteristic = characteristic,
+            value = packet,
+            description = "DISTANCE#$sampleCount",
+            replacePendingDistance = true
+        )
     }
 
     @SuppressLint("MissingPermission")
@@ -242,8 +283,15 @@ class BlePeerCoordinator(
             )
         )
 
+        val distance = BluetoothGattCharacteristic(
+            CsProtocol.DISTANCE_UUID,
+            BluetoothGattCharacteristic.PROPERTY_WRITE,
+            BluetoothGattCharacteristic.PERMISSION_WRITE_ENCRYPTED
+        )
+
         service.addCharacteristic(control)
         service.addCharacteristic(status)
+        service.addCharacteristic(distance)
 
         serverStatusCharacteristic = status
 
@@ -279,22 +327,18 @@ class BlePeerCoordinator(
         advertiser.startAdvertising(settings, data, advertiseCallback)
     }
 
-    @SuppressLint("MissingPermission")
     fun notifyReflectorReady() {
         notifyStatus(CsProtocol.READY)
     }
 
-    @SuppressLint("MissingPermission")
     fun notifyReflectorPreparing() {
         notifyStatus(CsProtocol.PREPARING)
     }
 
-    @SuppressLint("MissingPermission")
     fun notifyReflectorStopped() {
         notifyStatus(CsProtocol.STOPPED)
     }
 
-    @SuppressLint("MissingPermission")
     fun notifyReflectorFailure(message: String) {
         notifyStatus(CsProtocol.ERROR_PREFIX + message)
     }
@@ -355,12 +399,14 @@ class BlePeerCoordinator(
     @SuppressLint("MissingPermission")
     private fun closeClientGatt() {
         cancelPendingDiscovery()
+        clearWriteQueue()
 
         val gatt = clientGatt
 
         clientGatt = null
         controlCharacteristic = null
         statusCharacteristic = null
+        distanceCharacteristic = null
         serviceDiscoveryRequested = false
 
         try {
@@ -377,11 +423,13 @@ class BlePeerCoordinator(
     @SuppressLint("MissingPermission")
     private fun releaseClientGattFromCallback(gatt: BluetoothGatt) {
         cancelPendingDiscovery()
+        clearWriteQueue()
 
         if (clientGatt === gatt) {
             clientGatt = null
             controlCharacteristic = null
             statusCharacteristic = null
+            distanceCharacteristic = null
             serviceDiscoveryRequested = false
         }
 
@@ -440,9 +488,7 @@ class BlePeerCoordinator(
         val runnable = Runnable {
             pendingDiscoveryRunnable = null
 
-            if (clientGatt !== gatt) {
-                return@Runnable
-            }
+            if (clientGatt !== gatt) return@Runnable
 
             serviceDiscoveryRequested = true
 
@@ -466,6 +512,90 @@ class BlePeerCoordinator(
 
         pendingDiscoveryRunnable = runnable
         mainHandler.postDelayed(runnable, delayMillis)
+    }
+
+    private fun enqueueWrite(
+        characteristic: BluetoothGattCharacteristic,
+        value: ByteArray,
+        description: String,
+        replacePendingDistance: Boolean = false
+    ) {
+        synchronized(writeLock) {
+            if (replacePendingDistance) {
+                writeQueue.removeAll {
+                    it.characteristic.uuid == CsProtocol.DISTANCE_UUID
+                }
+            }
+
+            writeQueue.addLast(
+                PendingWrite(
+                    characteristic = characteristic,
+                    value = value,
+                    description = description
+                )
+            )
+        }
+
+        drainWriteQueue()
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun drainWriteQueue() {
+        val gatt = clientGatt ?: run {
+            clearWriteQueue()
+            return
+        }
+
+        val item = synchronized(writeLock) {
+            if (currentWrite != null || writeQueue.isEmpty()) {
+                return
+            }
+
+            writeQueue.removeFirst().also { currentWrite = it }
+        }
+
+        val requested = try {
+            if (Build.VERSION.SDK_INT >= 33) {
+                gatt.writeCharacteristic(
+                    item.characteristic,
+                    item.value,
+                    BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
+                ) == BluetoothStatusCodes.SUCCESS
+            } else {
+                @Suppress("DEPRECATION")
+                run {
+                    item.characteristic.writeType =
+                        BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
+                    item.characteristic.value = item.value
+                    gatt.writeCharacteristic(item.characteristic)
+                }
+            }
+        } catch (e: Exception) {
+            listener.onReflectorError(
+                "GATT write 예외(${item.description}): " +
+                        "${e.javaClass.simpleName}: ${e.message}"
+            )
+            false
+        }
+
+        if (!requested) {
+            synchronized(writeLock) {
+                currentWrite = null
+            }
+
+            listener.onReflectorError(
+                "GATT write 요청이 즉시 거부됨: ${item.description}"
+            )
+
+            mainHandler.post { drainWriteQueue() }
+        }
+    }
+
+    private fun clearWriteQueue() {
+        synchronized(writeLock) {
+            writeQueue.clear()
+            currentWrite = null
+        }
     }
 
     private val scanCallback = object : ScanCallback() {
@@ -558,13 +688,27 @@ class BlePeerCoordinator(
             }
 
             val service = gatt.getService(CsProtocol.SERVICE_UUID)
-            controlCharacteristic = service?.getCharacteristic(CsProtocol.CONTROL_UUID)
-            statusCharacteristic = service?.getCharacteristic(CsProtocol.STATUS_UUID)
+
+            controlCharacteristic =
+                service?.getCharacteristic(CsProtocol.CONTROL_UUID)
+
+            statusCharacteristic =
+                service?.getCharacteristic(CsProtocol.STATUS_UUID)
+
+            distanceCharacteristic =
+                service?.getCharacteristic(CsProtocol.DISTANCE_UUID)
 
             val statusChar = statusCharacteristic
 
-            if (controlCharacteristic == null || statusChar == null) {
-                listener.onReflectorError("Phone CS GATT service를 찾지 못했습니다.")
+            if (
+                controlCharacteristic == null ||
+                statusChar == null ||
+                distanceCharacteristic == null
+            ) {
+                listener.onReflectorError(
+                    "Phone CS GATT service의 control/status/distance characteristic을 찾지 못했습니다. " +
+                            "양쪽 앱을 모두 새 코드로 설치했는지 확인하세요."
+                )
                 return
             }
 
@@ -627,13 +771,21 @@ class BlePeerCoordinator(
             characteristic: BluetoothGattCharacteristic,
             status: Int
         ) {
-            if (characteristic.uuid != CsProtocol.CONTROL_UUID) return
+            val completed = synchronized(writeLock) {
+                currentWrite.also { currentWrite = null }
+            }
 
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                listener.onLog("GATT control 쓰기 완료")
+                if (completed?.characteristic?.uuid != CsProtocol.DISTANCE_UUID) {
+                    listener.onLog("GATT write 완료: ${completed?.description ?: characteristic.uuid}")
+                }
             } else {
-                listener.onReflectorError("GATT control 쓰기 실패: $status")
+                listener.onReflectorError(
+                    "GATT write 실패(${completed?.description ?: characteristic.uuid}): $status"
+                )
             }
+
+            drainWriteQueue()
         }
 
         @Deprecated("Deprecated in Java")
@@ -760,7 +912,7 @@ class BlePeerCoordinator(
             offset: Int,
             value: ByteArray
         ) {
-            if (characteristic.uuid != CsProtocol.CONTROL_UUID) {
+            if (preparedWrite || offset != 0) {
                 if (responseNeeded) {
                     gattServer?.sendResponse(
                         device,
@@ -790,32 +942,105 @@ class BlePeerCoordinator(
                 return
             }
 
-            val command = value.toString(StandardCharsets.UTF_8)
+            when (characteristic.uuid) {
+                CsProtocol.CONTROL_UUID -> {
+                    handleControlWrite(
+                        device = device,
+                        requestId = requestId,
+                        responseNeeded = responseNeeded,
+                        value = value
+                    )
+                }
 
+                CsProtocol.DISTANCE_UUID -> {
+                    handleDistanceWrite(
+                        device = device,
+                        requestId = requestId,
+                        responseNeeded = responseNeeded,
+                        value = value
+                    )
+                }
+
+                else -> {
+                    if (responseNeeded) {
+                        gattServer?.sendResponse(
+                            device,
+                            requestId,
+                            BluetoothGatt.GATT_REQUEST_NOT_SUPPORTED,
+                            offset,
+                            null
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    private fun handleControlWrite(
+        device: BluetoothDevice,
+        requestId: Int,
+        responseNeeded: Boolean,
+        value: ByteArray
+    ) {
+        val command = value.toString(StandardCharsets.UTF_8)
+
+        if (responseNeeded) {
+            gattServer?.sendResponse(
+                device,
+                requestId,
+                BluetoothGatt.GATT_SUCCESS,
+                0,
+                value
+            )
+        }
+
+        when (command) {
+            CsProtocol.START -> listener.onStartReflectorRequested(device.address)
+            CsProtocol.STOP -> listener.onStopReflectorRequested()
+            else -> listener.onReflectorError("알 수 없는 명령: $command")
+        }
+    }
+
+    private fun handleDistanceWrite(
+        device: BluetoothDevice,
+        requestId: Int,
+        responseNeeded: Boolean,
+        value: ByteArray
+    ) {
+        val packet = CsProtocol.decodeDistance(value)
+
+        if (packet == null) {
             if (responseNeeded) {
                 gattServer?.sendResponse(
                     device,
                     requestId,
-                    BluetoothGatt.GATT_SUCCESS,
-                    offset,
-                    value
+                    BluetoothGatt.GATT_INVALID_ATTRIBUTE_LENGTH,
+                    0,
+                    null
                 )
             }
 
-            when (command) {
-                CsProtocol.START -> {
-                    listener.onStartReflectorRequested(device.address)
-                }
-
-                CsProtocol.STOP -> {
-                    listener.onStopReflectorRequested()
-                }
-
-                else -> {
-                    listener.onReflectorError("알 수 없는 명령: $command")
-                }
-            }
+            listener.onReflectorError(
+                "거리 패킷 해석 실패: length=${value.size}"
+            )
+            return
         }
+
+        if (responseNeeded) {
+            gattServer?.sendResponse(
+                device,
+                requestId,
+                BluetoothGatt.GATT_SUCCESS,
+                0,
+                value
+            )
+        }
+
+        listener.onRemoteDistance(
+            rawMeters = packet.rawMeters,
+            smoothedMeters = packet.smoothedMeters,
+            sampleCount = packet.sampleCount
+        )
     }
 
     private val bondReceiver = object : BroadcastReceiver() {
@@ -873,31 +1098,6 @@ class BlePeerCoordinator(
                         )
                     }
                 }
-            }
-        }
-    }
-
-    @SuppressLint("MissingPermission")
-    private fun writeCharacteristic(
-        gatt: BluetoothGatt,
-        characteristic: BluetoothGattCharacteristic,
-        text: String
-    ): Boolean {
-        val bytes = text.toByteArray(StandardCharsets.UTF_8)
-
-        return if (Build.VERSION.SDK_INT >= 33) {
-            gatt.writeCharacteristic(
-                characteristic,
-                bytes,
-                BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
-            ) == BluetoothStatusCodes.SUCCESS
-        } else {
-            @Suppress("DEPRECATION")
-            run {
-                characteristic.writeType =
-                    BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
-                characteristic.value = bytes
-                gatt.writeCharacteristic(characteristic)
             }
         }
     }

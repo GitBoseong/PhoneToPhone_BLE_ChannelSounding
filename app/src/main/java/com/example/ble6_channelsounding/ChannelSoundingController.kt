@@ -19,6 +19,7 @@ import android.ranging.raw.RawRangingDevice
 import android.ranging.raw.RawResponderRangingConfig
 import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
+import java.util.Locale
 import java.util.UUID
 
 @RequiresApi(Build.VERSION_CODES.BAKLAVA)
@@ -116,12 +117,8 @@ class ChannelSoundingController(
         recentDistances.clear()
         totalSamples = 0
 
-        val normalizedAddress = peerAddress.uppercase()
+        val normalizedAddress = peerAddress.uppercase(Locale.US)
 
-        /*
-         * RangingDevice의 UUID는 앱 내부에서 peer를 식별하기 위한 값입니다.
-         * 기존 Nordic 예제 흐름과 동일하게 peer BLE 주소로부터 결정적으로 생성합니다.
-         */
         val rangingDevice = RangingDevice.Builder()
             .setUuid(UUID.nameUUIDFromBytes(normalizedAddress.toByteArray()))
             .build()
@@ -190,10 +187,8 @@ class ChannelSoundingController(
                 session = newSession
 
                 /*
-                 * 중요:
-                 * addDeviceToRangingSession()을 호출하지 않습니다.
-                 * 해당 API는 진행 중인 세션에 장치를 동적으로 추가하는 용도이며,
-                 * RawInitiatorRangingConfig를 전달하면 REASON_UNSUPPORTED가 발생합니다.
+                 * addDeviceToRangingSession()은 호출하지 않습니다.
+                 * RangingPreference에 포함된 raw config로 바로 시작합니다.
                  */
                 sessionCancellation = newSession.start(preference)
 
@@ -229,6 +224,7 @@ class ChannelSoundingController(
         }
 
         override fun onResults(peer: RangingDevice, data: RangingData) {
+            /* Android 공개 API의 BLE CS 거리 결과는 Initiator에서 처리합니다. */
             if (activeRole != Role.INITIATOR) return
 
             val raw = data.distance?.measurement?.toDouble() ?: return

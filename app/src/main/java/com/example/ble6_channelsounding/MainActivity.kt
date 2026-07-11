@@ -6,6 +6,8 @@ import android.bluetooth.BluetoothDevice
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.View
 import android.widget.ArrayAdapter
 import androidx.activity.result.contract.ActivityResultContracts
@@ -35,6 +37,9 @@ class MainActivity : AppCompatActivity(),
 
     private var selectedAddress: String? = null
     private var controlReady = false
+
+    /* Reflector가 완전히 준비된 뒤 Initiator를 약간 늦게 시작하여 역할 반전 안정성 향상 */
+    private val csStartHandler = Handler(Looper.getMainLooper())
 
     private val logLines = ArrayDeque<String>()
 
@@ -111,10 +116,6 @@ class MainActivity : AppCompatActivity(),
                 return@setOnClickListener
             }
 
-            /*
-             * 중복 START 방지.
-             * 실패하면 onReflectorError/onError/onClosed에서 다시 활성화합니다.
-             */
             binding.startCsButton.isEnabled = false
             bleCoordinator.requestStartFromReflector()
         }
@@ -181,13 +182,12 @@ class MainActivity : AppCompatActivity(),
         binding.reflectorPanel.visibility =
             if (initiator) View.GONE else View.VISIBLE
 
-        binding.distanceText.text =
-            if (initiator) "--.-- m" else "Initiator only"
+        binding.distanceText.text = "--.-- m"
 
         binding.rawDistanceText.text = if (initiator) {
             "Raw: - / samples: 0"
         } else {
-            "Android BLE CS 결과는 Initiator에만 전달됩니다."
+            "Initiator가 전달하는 거리값 대기 중"
         }
 
         controlReady = false
@@ -197,10 +197,10 @@ class MainActivity : AppCompatActivity(),
     }
 
     private fun stopEverything(keepLog: Boolean = false) {
+        csStartHandler.removeCallbacksAndMessages(null)
         csController?.stop()
 
         if (::bleCoordinator.isInitialized) {
-            /* stopAll() 내부에서 Reflector에 STOP을 한 번만 전송합니다. */
             bleCoordinator.stopAll()
         }
 
@@ -275,10 +275,10 @@ class MainActivity : AppCompatActivity(),
         runOnUiThread {
             binding.startCsButton.isEnabled = true
             binding.selectedDeviceText.text =
-                "페어링 및 제어 채널 준비 완료: $address"
+                "페어링 및 제어·거리 채널 준비 완료: $address"
         }
 
-        log("GATT 제어 채널 준비 완료")
+        log("GATT 제어 및 거리 채널 준비 완료")
     }
 
     override fun onStartReflectorRequested(initiatorAddress: String) {
@@ -296,6 +296,9 @@ class MainActivity : AppCompatActivity(),
                 return@runOnUiThread
             }
 
+            binding.distanceText.text = "--.-- m"
+            binding.rawDistanceText.text = "Initiator 거리값 수신 대기 중"
+
             bleCoordinator.notifyReflectorPreparing()
             controller.startReflector(
                 initiatorAddress.uppercase(Locale.US)
@@ -309,24 +312,34 @@ class MainActivity : AppCompatActivity(),
         runOnUiThread {
             csController?.stop()
             bleCoordinator.notifyReflectorStopped()
+            binding.rawDistanceText.text = "거리 공유 중지됨"
         }
     }
 
     override fun onReflectorReady(reflectorAddress: String) {
         if (uiRole != UiRole.INITIATOR) return
 
-        log("Reflector READY 수신 → Initiator CS 시작")
+        val normalizedAddress = reflectorAddress.uppercase(Locale.US)
 
-        val controller = csController
-        if (controller == null) {
-            log("CS 오류: ChannelSoundingController가 초기화되지 않았습니다.")
-            restoreStartButton()
-            return
-        }
+        log("Reflector READY 수신 → 800 ms 후 Initiator CS 시작")
 
-        controller.startInitiator(
-            reflectorAddress.uppercase(Locale.US)
-        )
+        csStartHandler.removeCallbacksAndMessages(null)
+        csStartHandler.postDelayed({
+            if (uiRole != UiRole.INITIATOR || !controlReady) {
+                log("역할 또는 GATT 상태 변경으로 Initiator 시작 취소")
+                restoreStartButton()
+                return@postDelayed
+            }
+
+            val controller = csController
+            if (controller == null) {
+                log("CS 오류: ChannelSoundingController가 초기화되지 않았습니다.")
+                restoreStartButton()
+                return@postDelayed
+            }
+
+            controller.startInitiator(normalizedAddress)
+        }, 800L)
     }
 
     override fun onReflectorError(message: String) {
@@ -334,8 +347,33 @@ class MainActivity : AppCompatActivity(),
         restoreStartButton()
     }
 
+    override fun onRemoteDistance(
+        rawMeters: Double,
+        smoothedMeters: Double,
+        sampleCount: Int
+    ) {
+        if (uiRole != UiRole.REFLECTOR) return
+
+        runOnUiThread {
+            binding.distanceText.text = String.format(
+                Locale.US,
+                "%.2f m",
+                smoothedMeters
+            )
+
+            binding.rawDistanceText.text = String.format(
+                Locale.US,
+                "Initiator relay / Raw: %.3f m / 5-sample mean: %.3f m / samples: %d",
+                rawMeters,
+                smoothedMeters,
+                sampleCount
+            )
+        }
+    }
+
     override fun onDisconnected() {
         controlReady = false
+        csStartHandler.removeCallbacksAndMessages(null)
 
         runOnUiThread {
             binding.startCsButton.isEnabled = false
@@ -356,7 +394,6 @@ class MainActivity : AppCompatActivity(),
         log("RangingSession opened: $role")
 
         if (role == ChannelSoundingController.Role.REFLECTOR) {
-            /* Reflector 세션이 실제로 열린 다음에만 READY 전송 */
             bleCoordinator.notifyReflectorReady()
         }
     }
@@ -370,6 +407,8 @@ class MainActivity : AppCompatActivity(),
         smoothedMeters: Double,
         sampleCount: Int
     ) {
+        if (uiRole != UiRole.INITIATOR) return
+
         runOnUiThread {
             binding.distanceText.text = String.format(
                 Locale.US,
@@ -385,6 +424,13 @@ class MainActivity : AppCompatActivity(),
                 sampleCount
             )
         }
+
+        /* Initiator가 받은 값을 Reflector GATT server로 전달 */
+        bleCoordinator.sendDistanceToReflector(
+            rawMeters = rawMeters,
+            smoothedMeters = smoothedMeters,
+            sampleCount = sampleCount
+        )
     }
 
     override fun onRangingStopped(role: ChannelSoundingController.Role) {
@@ -423,7 +469,7 @@ class MainActivity : AppCompatActivity(),
 
         val line = "$time  $message"
 
-        while (logLines.size >= 80) {
+        while (logLines.size >= 100) {
             logLines.removeFirst()
         }
 
