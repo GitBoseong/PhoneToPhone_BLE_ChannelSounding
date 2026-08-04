@@ -26,6 +26,7 @@ class MainActivity : AppCompatActivity(),
     private lateinit var binding: ActivityMainBinding
     private lateinit var bleCoordinator: BlePeerCoordinator
     private var csController: ChannelSoundingController? = null
+    private lateinit var csvLogger: CsCsvLogger
 
     private enum class UiRole { INITIATOR, REFLECTOR }
 
@@ -61,6 +62,7 @@ class MainActivity : AppCompatActivity(),
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        csvLogger = CsCsvLogger(applicationContext)
 
         if (Build.VERSION.SDK_INT < 36) {
             binding.capabilityText.text = "Android 16 / API 36 이상 필요"
@@ -117,6 +119,7 @@ class MainActivity : AppCompatActivity(),
             }
 
             binding.startCsButton.isEnabled = false
+            startCsvSession(UiRole.INITIATOR, selectedAddress)
             bleCoordinator.requestStartFromReflector()
         }
 
@@ -197,6 +200,9 @@ class MainActivity : AppCompatActivity(),
     }
 
     private fun stopEverything(keepLog: Boolean = false) {
+        if (!keepLog) {
+            log("전체 세션 중지", "APP")
+        }
         csStartHandler.removeCallbacksAndMessages(null)
         csController?.stop()
 
@@ -210,9 +216,7 @@ class MainActivity : AppCompatActivity(),
             binding.startCsButton.isEnabled = false
         }
 
-        if (!keepLog) {
-            log("전체 세션 중지")
-        }
+        if (::csvLogger.isInitialized) csvLogger.close()
     }
 
     override fun onDestroy() {
@@ -226,7 +230,7 @@ class MainActivity : AppCompatActivity(),
     }
 
     override fun onLog(message: String) {
-        log(message)
+        log(message, "BLE")
     }
 
     @SuppressLint("MissingPermission")
@@ -284,6 +288,7 @@ class MainActivity : AppCompatActivity(),
     override fun onStartReflectorRequested(initiatorAddress: String) {
         if (uiRole != UiRole.REFLECTOR) return
 
+        startCsvSession(UiRole.REFLECTOR, initiatorAddress)
         log("Initiator로부터 START 수신: $initiatorAddress")
 
         runOnUiThread {
@@ -344,6 +349,7 @@ class MainActivity : AppCompatActivity(),
 
     override fun onReflectorError(message: String) {
         log("BLE 오류: $message")
+        csvLogger.close()
         restoreStartButton()
     }
 
@@ -353,6 +359,8 @@ class MainActivity : AppCompatActivity(),
         sampleCount: Int
     ) {
         if (uiRole != UiRole.REFLECTOR) return
+
+        csvLogger.distance("REMOTE", rawMeters, smoothedMeters, sampleCount)
 
         runOnUiThread {
             binding.distanceText.text = String.format(
@@ -380,6 +388,7 @@ class MainActivity : AppCompatActivity(),
         }
 
         log("Peer 연결 해제")
+        csvLogger.close()
     }
 
     override fun onCapability(supported: Boolean, detail: String) {
@@ -408,6 +417,8 @@ class MainActivity : AppCompatActivity(),
         sampleCount: Int
     ) {
         if (uiRole != UiRole.INITIATOR) return
+
+        csvLogger.distance("LOCAL", rawMeters, smoothedMeters, sampleCount)
 
         runOnUiThread {
             binding.distanceText.text = String.format(
@@ -450,6 +461,7 @@ class MainActivity : AppCompatActivity(),
 
     override fun onClosed(reason: Int) {
         log("RangingSession closed: reason=$reason")
+        csvLogger.close()
         restoreStartButton()
     }
 
@@ -461,13 +473,26 @@ class MainActivity : AppCompatActivity(),
         }
     }
 
-    private fun log(message: String) {
+    private fun startCsvSession(role: UiRole, peerAddress: String?) {
+        val uri = csvLogger.start(role.name, peerAddress)
+        if (uri == null) {
+            log("CSV 파일 생성 실패: 다운로드/PhoneCS 폴더를 확인하세요.", "STORAGE")
+        } else {
+            log("CSV 저장 시작: 다운로드/PhoneCS", "STORAGE")
+        }
+    }
+
+    private fun log(message: String, source: String = "CS") {
         val time = SimpleDateFormat(
             "HH:mm:ss.SSS",
             Locale.US
         ).format(Date())
 
         val line = "$time  $message"
+
+        if (::csvLogger.isInitialized) {
+            csvLogger.event(source, message)
+        }
 
         while (logLines.size >= 100) {
             logLines.removeFirst()
