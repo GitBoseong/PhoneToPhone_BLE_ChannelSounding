@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<incidents format="6" by="lint 9.2.1" type="partial_results">
+    <map id="UnsafeIntentLaunch">
+            <map id="unprotected">
+                <entry
+                    name="com.example.ble6_channelsounding.MainActivity"
+                    boolean="true"/>
+            </map>
+    </map>
+    <map id="UnusedResources">
+        <location id="R.string.app_name"
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/values/strings.xml"
+            line="3"
+            column="13"
+            startOffset="65"
+            endLine="3"
+            endColumn="28"
+            endOffset="80"/>
+        <entry
+            name="model"
+            string="drawable[panel_background(U)],id[capabilityText(U),connectionStatusText(U),roleGroup(D),initiatorRadio(D),reflectorRadio(U),applyRoleButton(U),imuSwitch(U),gpsSwitch(U),txPowerPanel(U),txRequestedText(U),txPowerSlider(U),txRangeText(U),txAppliedText(U),initiatorPanel(U),scanButton(U),deviceList(U),selectedDeviceText(U),pairButton(U),startCsButton(U),reflectorPanel(U),advertiseButton(U),reflectorPeerText(U),stopButton(U),distanceText(U),rawDistanceText(U),rssiText(U),recordingText(U),statusText(U)],layout[activity_main(U)],string[app_name(D)],style[Theme_PhoneCS(U),Theme_AppCompat_Light_NoActionBar(R)];1d^0,1f^20;;;"/>
+    </map>
+
+</incidents>

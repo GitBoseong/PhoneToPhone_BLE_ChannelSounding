@@ -1,0 +1,27 @@
+<variant
+    name="debug"
+    package="com.example.ble6_channelsounding"
+    minSdkVersion="31"
+    targetSdkVersion="37.0"
+    debuggable="true"
+    mergedManifest="build\intermediates\merged_manifest\debug\processDebugMainManifest\AndroidManifest.xml"
+    partialResultsDir="build\intermediates\unit_test_lint_partial_results\debug\lintAnalyzeDebugUnitTest\out"
+    desugaredMethodsFiles="C:\Users\kimbo\.gradle\caches\9.4.1\transforms\c9d6c9e732cd2cce21287f06ff1f8afb\transformed\D8BackportedDesugaredMethods.txt">
+  <buildFeatures
+      viewBinding="true"/>
+  <sourceProviders>
+  </sourceProviders>
+  <testSourceProviders>
+    <sourceProvider
+        manifests="src\test\AndroidManifest.xml"
+        javaDirectories="src\test\java;src\testDebug\java;src\test\kotlin;src\testDebug\kotlin"
+        assetsDirectories="src\test\assets;src\testDebug\assets"
+        keepRulesDirectories="src\test\keepRules;src\testDebug\keepRules"
+        unitTest="true"/>
+  </testSourceProviders>
+  <testFixturesSourceProviders>
+  </testFixturesSourceProviders>
+  <artifact
+      type="UNIT_TEST">
+  </artifact>
+</variant>

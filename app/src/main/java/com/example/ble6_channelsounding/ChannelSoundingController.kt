@@ -31,7 +31,7 @@ class ChannelSoundingController(
         fun onCapability(supported: Boolean, detail: String)
         fun onSessionOpened(role: Role)
         fun onRangingStarted(role: Role)
-        fun onDistance(rawMeters: Double, smoothedMeters: Double, sampleCount: Int)
+        fun onDistance(rawMeters: Double, smoothedMeters: Double, sampleCount: Int, rssi: Int?, timestampEpochMs: Long)
         fun onRangingStopped(role: Role)
         fun onError(message: String)
         fun onClosed(reason: Int)
@@ -48,6 +48,7 @@ class ChannelSoundingController(
 
     private var activeRole: Role? = null
     private var starting = false
+    private var generation = 0L
 
     private val recentDistances = ArrayDeque<Double>()
     private var totalSamples = 0
@@ -113,6 +114,7 @@ class ChannelSoundingController(
         }
 
         starting = true
+        val token = ++generation
         activeRole = role
         recentDistances.clear()
         totalSamples = 0
@@ -160,6 +162,7 @@ class ChannelSoundingController(
         unregisterCapabilityCallback()
 
         val callback = RangingManager.RangingCapabilitiesCallback { capabilities ->
+            if (generation != token) return@RangingCapabilitiesCallback
             val cs = capabilities.csCapabilities
 
             if (cs == null) {
@@ -178,7 +181,7 @@ class ChannelSoundingController(
             try {
                 val newSession = manager.createRangingSession(
                     context.mainExecutor,
-                    sessionCallback
+                    sessionCallback(token)
                 ) ?: run {
                     fail("RangingSession 생성 실패")
                     return@RangingCapabilitiesCallback
@@ -205,13 +208,15 @@ class ChannelSoundingController(
         manager.registerCapabilitiesCallback(context.mainExecutor, callback)
     }
 
-    private val sessionCallback = object : RangingSession.Callback {
+    private fun sessionCallback(token: Long) = object : RangingSession.Callback {
         override fun onOpened() {
+            if (generation != token) return
             starting = false
             activeRole?.let(listener::onSessionOpened)
         }
 
         override fun onOpenFailed(reason: Int) {
+            if (generation != token) return
             starting = false
             fail(
                 "RangingSession open 실패: " +
@@ -220,10 +225,12 @@ class ChannelSoundingController(
         }
 
         override fun onStarted(peer: RangingDevice, technology: Int) {
+            if (generation != token) return
             activeRole?.let(listener::onRangingStarted)
         }
 
         override fun onResults(peer: RangingDevice, data: RangingData) {
+            if (generation != token) return
             /* Android 공개 API의 BLE CS 거리 결과는 Initiator에서 처리합니다. */
             if (activeRole != Role.INITIATOR) return
 
@@ -237,20 +244,25 @@ class ChannelSoundingController(
             }
 
             val smoothed = recentDistances.average()
-            listener.onDistance(raw, smoothed, totalSamples)
+            // API 36 getTimestampMillis() is annotated @CurrentTimeMillisLong (Unix epoch).
+            listener.onDistance(raw, smoothed, totalSamples,
+                if (data.hasRssi()) data.rssi else null, data.timestampMillis)
         }
 
         override fun onStopped(peer: RangingDevice, technology: Int) {
+            if (generation != token) return
             activeRole?.let(listener::onRangingStopped)
         }
 
         override fun onClosed(reason: Int) {
-            listener.onClosed(reason)
+            if (generation != token) return
             cleanup()
+            listener.onClosed(reason)
         }
     }
 
     fun stop() {
+        generation++ // Ignore late callbacks from a stopped session after a role change/restart.
         starting = false
 
         try {

@@ -10,9 +10,11 @@ import android.widget.ListView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.ScrollView;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.SwitchCompat;
 import androidx.viewbinding.ViewBinding;
 import androidx.viewbinding.ViewBindings;
 import com.example.ble6_channelsounding.R;
@@ -34,10 +36,19 @@ public final class ActivityMainBinding implements ViewBinding {
   public final TextView capabilityText;
 
   @NonNull
+  public final TextView connectionStatusText;
+
+  @NonNull
   public final ListView deviceList;
 
   @NonNull
   public final TextView distanceText;
+
+  @NonNull
+  public final SwitchCompat gpsSwitch;
+
+  @NonNull
+  public final SwitchCompat imuSwitch;
 
   @NonNull
   public final LinearLayout initiatorPanel;
@@ -52,6 +63,9 @@ public final class ActivityMainBinding implements ViewBinding {
   public final TextView rawDistanceText;
 
   @NonNull
+  public final TextView recordingText;
+
+  @NonNull
   public final LinearLayout reflectorPanel;
 
   @NonNull
@@ -62,6 +76,9 @@ public final class ActivityMainBinding implements ViewBinding {
 
   @NonNull
   public final RadioGroup roleGroup;
+
+  @NonNull
+  public final TextView rssiText;
 
   @NonNull
   public final Button scanButton;
@@ -78,34 +95,64 @@ public final class ActivityMainBinding implements ViewBinding {
   @NonNull
   public final Button stopButton;
 
+  @NonNull
+  public final TextView txAppliedText;
+
+  @NonNull
+  public final LinearLayout txPowerPanel;
+
+  @NonNull
+  public final SeekBar txPowerSlider;
+
+  @NonNull
+  public final TextView txRangeText;
+
+  @NonNull
+  public final TextView txRequestedText;
+
   private ActivityMainBinding(@NonNull ScrollView rootView, @NonNull Button advertiseButton,
       @NonNull Button applyRoleButton, @NonNull TextView capabilityText,
-      @NonNull ListView deviceList, @NonNull TextView distanceText,
-      @NonNull LinearLayout initiatorPanel, @NonNull RadioButton initiatorRadio,
-      @NonNull Button pairButton, @NonNull TextView rawDistanceText,
+      @NonNull TextView connectionStatusText, @NonNull ListView deviceList,
+      @NonNull TextView distanceText, @NonNull SwitchCompat gpsSwitch,
+      @NonNull SwitchCompat imuSwitch, @NonNull LinearLayout initiatorPanel,
+      @NonNull RadioButton initiatorRadio, @NonNull Button pairButton,
+      @NonNull TextView rawDistanceText, @NonNull TextView recordingText,
       @NonNull LinearLayout reflectorPanel, @NonNull TextView reflectorPeerText,
       @NonNull RadioButton reflectorRadio, @NonNull RadioGroup roleGroup,
-      @NonNull Button scanButton, @NonNull TextView selectedDeviceText,
-      @NonNull Button startCsButton, @NonNull TextView statusText, @NonNull Button stopButton) {
+      @NonNull TextView rssiText, @NonNull Button scanButton, @NonNull TextView selectedDeviceText,
+      @NonNull Button startCsButton, @NonNull TextView statusText, @NonNull Button stopButton,
+      @NonNull TextView txAppliedText, @NonNull LinearLayout txPowerPanel,
+      @NonNull SeekBar txPowerSlider, @NonNull TextView txRangeText,
+      @NonNull TextView txRequestedText) {
     this.rootView = rootView;
     this.advertiseButton = advertiseButton;
     this.applyRoleButton = applyRoleButton;
     this.capabilityText = capabilityText;
+    this.connectionStatusText = connectionStatusText;
     this.deviceList = deviceList;
     this.distanceText = distanceText;
+    this.gpsSwitch = gpsSwitch;
+    this.imuSwitch = imuSwitch;
     this.initiatorPanel = initiatorPanel;
     this.initiatorRadio = initiatorRadio;
     this.pairButton = pairButton;
     this.rawDistanceText = rawDistanceText;
+    this.recordingText = recordingText;
     this.reflectorPanel = reflectorPanel;
     this.reflectorPeerText = reflectorPeerText;
     this.reflectorRadio = reflectorRadio;
     this.roleGroup = roleGroup;
+    this.rssiText = rssiText;
     this.scanButton = scanButton;
     this.selectedDeviceText = selectedDeviceText;
     this.startCsButton = startCsButton;
     this.statusText = statusText;
     this.stopButton = stopButton;
+    this.txAppliedText = txAppliedText;
+    this.txPowerPanel = txPowerPanel;
+    this.txPowerSlider = txPowerSlider;
+    this.txRangeText = txRangeText;
+    this.txRequestedText = txRequestedText;
   }
 
   @Override
@@ -153,6 +200,12 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.connectionStatusText;
+      TextView connectionStatusText = ViewBindings.findChildViewById(rootView, id);
+      if (connectionStatusText == null) {
+        break missingId;
+      }
+
       id = R.id.deviceList;
       ListView deviceList = ViewBindings.findChildViewById(rootView, id);
       if (deviceList == null) {
@@ -162,6 +215,18 @@ public final class ActivityMainBinding implements ViewBinding {
       id = R.id.distanceText;
       TextView distanceText = ViewBindings.findChildViewById(rootView, id);
       if (distanceText == null) {
+        break missingId;
+      }
+
+      id = R.id.gpsSwitch;
+      SwitchCompat gpsSwitch = ViewBindings.findChildViewById(rootView, id);
+      if (gpsSwitch == null) {
+        break missingId;
+      }
+
+      id = R.id.imuSwitch;
+      SwitchCompat imuSwitch = ViewBindings.findChildViewById(rootView, id);
+      if (imuSwitch == null) {
         break missingId;
       }
 
@@ -189,6 +254,12 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.recordingText;
+      TextView recordingText = ViewBindings.findChildViewById(rootView, id);
+      if (recordingText == null) {
+        break missingId;
+      }
+
       id = R.id.reflectorPanel;
       LinearLayout reflectorPanel = ViewBindings.findChildViewById(rootView, id);
       if (reflectorPanel == null) {
@@ -210,6 +281,12 @@ public final class ActivityMainBinding implements ViewBinding {
       id = R.id.roleGroup;
       RadioGroup roleGroup = ViewBindings.findChildViewById(rootView, id);
       if (roleGroup == null) {
+        break missingId;
+      }
+
+      id = R.id.rssiText;
+      TextView rssiText = ViewBindings.findChildViewById(rootView, id);
+      if (rssiText == null) {
         break missingId;
       }
 
@@ -243,10 +320,42 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.txAppliedText;
+      TextView txAppliedText = ViewBindings.findChildViewById(rootView, id);
+      if (txAppliedText == null) {
+        break missingId;
+      }
+
+      id = R.id.txPowerPanel;
+      LinearLayout txPowerPanel = ViewBindings.findChildViewById(rootView, id);
+      if (txPowerPanel == null) {
+        break missingId;
+      }
+
+      id = R.id.txPowerSlider;
+      SeekBar txPowerSlider = ViewBindings.findChildViewById(rootView, id);
+      if (txPowerSlider == null) {
+        break missingId;
+      }
+
+      id = R.id.txRangeText;
+      TextView txRangeText = ViewBindings.findChildViewById(rootView, id);
+      if (txRangeText == null) {
+        break missingId;
+      }
+
+      id = R.id.txRequestedText;
+      TextView txRequestedText = ViewBindings.findChildViewById(rootView, id);
+      if (txRequestedText == null) {
+        break missingId;
+      }
+
       return new ActivityMainBinding((ScrollView) rootView, advertiseButton, applyRoleButton,
-          capabilityText, deviceList, distanceText, initiatorPanel, initiatorRadio, pairButton,
-          rawDistanceText, reflectorPanel, reflectorPeerText, reflectorRadio, roleGroup, scanButton,
-          selectedDeviceText, startCsButton, statusText, stopButton);
+          capabilityText, connectionStatusText, deviceList, distanceText, gpsSwitch, imuSwitch,
+          initiatorPanel, initiatorRadio, pairButton, rawDistanceText, recordingText,
+          reflectorPanel, reflectorPeerText, reflectorRadio, roleGroup, rssiText, scanButton,
+          selectedDeviceText, startCsButton, statusText, stopButton, txAppliedText, txPowerPanel,
+          txPowerSlider, txRangeText, txRequestedText);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

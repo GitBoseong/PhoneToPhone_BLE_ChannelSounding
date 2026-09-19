@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<incidents format="6" by="lint 9.2.1" type="conditional_incidents">
+
+    <incident
+        id="ObsoleteSdkInt"
+        severity="warning"
+        message="Unnecessary; `SDK_INT` is always >= 36">
+        <fix-replace
+            description="Delete @RequiresApi"
+            replacement=""
+            priority="0">
+            <range
+                file="${:app*debug*MAIN*sourceProvider*0*javaDir*0}/com/example/ble6_channelsounding/ChannelSoundingController.kt"
+                startOffset="850"
+                endOffset="891"/>
+        </fix-replace>
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*javaDir*0}/com/example/ble6_channelsounding/ChannelSoundingController.kt"
+            line="25"
+            column="1"
+            startOffset="850"
+            endLine="25"
+            endColumn="42"
+            endOffset="891"/>
+        <map>
+            <condition minGE="36-∞"/>
+        </map>
+    </incident>
+
+    <incident
+        id="ObsoleteSdkInt"
+        severity="warning"
+        message="Unnecessary; `SDK_INT` is always >= 36">
+        <fix-replace
+            description="Delete @RequiresApi"
+            replacement=""
+            priority="0">
+            <range
+                file="${:app*debug*MAIN*sourceProvider*0*javaDir*0}/com/example/ble6_channelsounding/MainActivity.kt"
+                startOffset="6663"
+                endOffset="6679"/>
+        </fix-replace>
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*javaDir*0}/com/example/ble6_channelsounding/MainActivity.kt"
+            line="190"
+            column="5"
+            startOffset="6663"
+            endLine="190"
+            endColumn="21"
+            endOffset="6679"/>
+        <map>
+            <condition minGE="36-∞"/>
+        </map>
+    </incident>
+
+</incidents>

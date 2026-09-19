@@ -14,9 +14,10 @@ import android.bluetooth.BluetoothGattService
 import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
 import android.bluetooth.BluetoothStatusCodes
-import android.bluetooth.le.AdvertiseCallback
+import android.bluetooth.le.AdvertisingSet
+import android.bluetooth.le.AdvertisingSetCallback
+import android.bluetooth.le.AdvertisingSetParameters
 import android.bluetooth.le.AdvertiseData
-import android.bluetooth.le.AdvertiseSettings
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanFilter
 import android.bluetooth.le.ScanResult
@@ -38,9 +39,16 @@ class BlePeerCoordinator(
     private val context: Context,
     private val listener: Listener
 ) {
+    companion object {
+        const val MIN_ADVERTISING_TX_DBM = -21
+        // API 37 expands the public request range; actual applied power remains controller-owned.
+        val maxAdvertisingTxDbm: Int
+            get() = if (Build.VERSION.SDK_INT >= 37) AdvertisingSetParameters.TX_POWER_MAX_AVAILABLE else 1
+    }
     interface Listener {
         fun onLog(message: String)
-        fun onScanDevice(device: BluetoothDevice, name: String, rssi: Int)
+        fun onScanDevice(device: BluetoothDevice, name: String, rssi: Int, txPower: Int?, timestamp: Long)
+        fun onAdvertisingState(busy: Boolean, appliedTxPower: Int?)
         fun onSelectedPeerConnected(address: String)
         fun onBondState(address: String, state: Int)
         fun onControlChannelReady(address: String)
@@ -93,6 +101,11 @@ class BlePeerCoordinator(
     private var serverConnectedDevice: BluetoothDevice? = null
     private var notificationsEnabled = false
     private var advertising = false
+    private var advertisingStarting = false
+    private var requestedTxPower: Int? = null
+    private var appliedTxPower: Int? = null
+    private var advertiseCallback: AdvertisingSetCallback? = null
+    private var advertisingService: BluetoothGattService? = null
 
     private var bondReceiverRegistered = false
 
@@ -176,7 +189,7 @@ class BlePeerCoordinator(
             return
         }
 
-        stopScan()
+        // Keep the service-filtered ScanCallback alive through GATT and CS.
         closeClientGatt()
 
         serviceDiscoveryRequested = false
@@ -241,13 +254,23 @@ class BlePeerCoordinator(
     }
 
     @SuppressLint("MissingPermission")
-    fun startReflectorAdvertising() {
+    fun startReflectorAdvertising(txPower: Int? = null) {
+        if (advertising || advertisingStarting || serverConnectedDevice != null) return
+        if (txPower != null && txPower !in MIN_ADVERTISING_TX_DBM..maxAdvertisingTxDbm) {
+            listener.onReflectorError("Unsupported Advertising TX Power request: $txPower")
+            return
+        }
         if (!hasBlePermissions()) {
             listener.onReflectorError("BLE 권한이 없습니다.")
             return
         }
 
         closeServer()
+        requestedTxPower = txPower
+        advertisingStarting = true
+        listener.onAdvertisingState(true, null)
+        listener.onLog("TX_POWER mode=${if (txPower == null) "DEFAULT" else "CUSTOM"}")
+        listener.onLog("TX_POWER requested=${txPower?.let { "$it dBm" } ?: "DEFAULT"}")
 
         val server = bluetoothManager.openGattServer(context, serverCallback)
             ?: run {
@@ -295,6 +318,7 @@ class BlePeerCoordinator(
 
         serverStatusCharacteristic = status
 
+        advertisingService = service
         val addRequested = server.addService(service)
         if (!addRequested) {
             listener.onReflectorError("GATT server service 추가 요청 실패")
@@ -312,19 +336,62 @@ class BlePeerCoordinator(
             return
         }
 
-        val settings = AdvertiseSettings.Builder()
-            .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY)
-            .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_HIGH)
+        val builder = AdvertisingSetParameters.Builder()
+            .setLegacyMode(true)
             .setConnectable(true)
-            .setTimeout(0)
-            .build()
-
+            .setScannable(true)
+            .setInterval(AdvertisingSetParameters.INTERVAL_LOW)
+        // Default: leave the builder's platform default untouched; never invent applied dBm.
+        requestedTxPower?.let(builder::setTxPowerLevel)
         val data = AdvertiseData.Builder()
             .addServiceUuid(ParcelUuid(CsProtocol.SERVICE_UUID))
             .setIncludeDeviceName(false)
+            .setIncludeTxPowerLevel(true)
             .build()
+        val callback = object : AdvertisingSetCallback() {
+            override fun onAdvertisingSetStarted(set: AdvertisingSet?, txPower: Int, status: Int) {
+                if (advertiseCallback !== this) return
+                advertisingStarting = false
+                if (status == ADVERTISE_SUCCESS && set != null) {
+                    advertising = true
+                    appliedTxPower = txPower
+                    listener.onLog("Advertising started; TX_POWER applied=$txPower dBm")
+                    listener.onAdvertisingState(true, txPower)
+                } else {
+                    advertiseCallback = null
+                    advertising = false
+                    listener.onAdvertisingState(false, null)
+                    listener.onReflectorError("Advertising start failed: $status; TX_POWER applied=N/A")
+                }
+            }
+            override fun onAdvertisingSetStopped(set: AdvertisingSet?) {
+                if (advertiseCallback !== this) return
+                advertiseCallback = null
+                advertising = false
+                advertisingStarting = false
+                listener.onAdvertisingState(false, appliedTxPower)
+            }
+        }
+        advertiseCallback = callback
+        try {
+            advertiser.startAdvertisingSet(builder.build(), data, null, null, null, callback)
+            listener.onLog("Legacy connectable/scannable advertising requested")
+        } catch (e: Exception) {
+            stopAdvertisingOnly()
+            listener.onReflectorError("Advertising failed: ${e.message}")
+        }
+    }
 
-        advertiser.startAdvertising(settings, data, advertiseCallback)
+    @SuppressLint("MissingPermission")
+    private fun stopAdvertisingOnly() {
+        val callback = advertiseCallback
+        if (callback != null || advertisingStarting) listener.onLog("Advertising stopped")
+        advertiseCallback = null // Invalidates late start/stop callbacks.
+        try { callback?.let { adapter.bluetoothLeAdvertiser?.stopAdvertisingSet(it) } }
+        catch (_: Exception) { }
+        advertising = false
+        advertisingStarting = false
+        listener.onAdvertisingState(false, appliedTxPower)
     }
 
     fun notifyReflectorReady() {
@@ -441,14 +508,9 @@ class BlePeerCoordinator(
 
     @SuppressLint("MissingPermission")
     private fun closeServer() {
-        try {
-            if (advertising) {
-                adapter.bluetoothLeAdvertiser?.stopAdvertising(advertiseCallback)
-            }
-        } catch (_: Exception) {
-        }
-
-        advertising = false
+        advertisingService = null
+        appliedTxPower = null
+        stopAdvertisingOnly()
 
         try {
             serverConnectedDevice?.let { device ->
@@ -606,23 +668,18 @@ class BlePeerCoordinator(
                 ?: device.name
                 ?: "Phone CS Reflector"
 
-            listener.onScanDevice(device, name, result.rssi)
+            // Legacy AD TX Power is in ScanRecord; extended reports may expose ScanResult.txPower.
+            val reported = result.txPower.takeUnless { it == ScanResult.TX_POWER_NOT_PRESENT }
+            val packetPower = result.scanRecord?.txPowerLevel?.takeUnless { it == Int.MIN_VALUE }
+            val power = reported ?: packetPower
+            val epoch = System.currentTimeMillis() +
+                (result.timestampNanos - android.os.SystemClock.elapsedRealtimeNanos()) / 1_000_000L
+            listener.onLog("SCAN ${device.address} RSSI=${result.rssi} dBm TX_POWER advertised=${power?.let { "$it dBm" } ?: "N/A"}")
+            listener.onScanDevice(device, name, result.rssi, power, epoch)
         }
 
         override fun onScanFailed(errorCode: Int) {
             listener.onReflectorError("BLE scan 실패: $errorCode")
-        }
-    }
-
-    private val advertiseCallback = object : AdvertiseCallback() {
-        override fun onStartSuccess(settingsInEffect: AdvertiseSettings?) {
-            advertising = true
-            listener.onLog("Reflector 광고 시작됨")
-        }
-
-        override fun onStartFailure(errorCode: Int) {
-            advertising = false
-            listener.onReflectorError("광고 시작 실패: $errorCode")
         }
     }
 
@@ -633,6 +690,7 @@ class BlePeerCoordinator(
             status: Int,
             newState: Int
         ) {
+            if (clientGatt !== gatt) return // A closed connection must not end a newer session.
             if (status != BluetoothGatt.GATT_SUCCESS) {
                 listener.onReflectorError("GATT 오류 status=$status")
                 releaseClientGattFromCallback(gatt)
@@ -680,6 +738,7 @@ class BlePeerCoordinator(
 
         @SuppressLint("MissingPermission")
         override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
+            if (clientGatt !== gatt) return
             serviceDiscoveryRequested = false
 
             if (status != BluetoothGatt.GATT_SUCCESS) {
@@ -757,6 +816,7 @@ class BlePeerCoordinator(
             descriptor: BluetoothGattDescriptor,
             status: Int
         ) {
+            if (clientGatt !== gatt) return
             if (descriptor.uuid != CsProtocol.CCCD_UUID) return
 
             if (status == BluetoothGatt.GATT_SUCCESS) {
@@ -771,6 +831,7 @@ class BlePeerCoordinator(
             characteristic: BluetoothGattCharacteristic,
             status: Int
         ) {
+            if (clientGatt !== gatt) return
             val completed = synchronized(writeLock) {
                 currentWrite.also { currentWrite = null }
             }
@@ -793,6 +854,7 @@ class BlePeerCoordinator(
             gatt: BluetoothGatt,
             characteristic: BluetoothGattCharacteristic
         ) {
+            if (clientGatt !== gatt) return
             @Suppress("DEPRECATION")
             handleStatus(gatt.device.address, characteristic.value)
         }
@@ -802,6 +864,7 @@ class BlePeerCoordinator(
             characteristic: BluetoothGattCharacteristic,
             value: ByteArray
         ) {
+            if (clientGatt !== gatt) return
             handleStatus(gatt.device.address, value)
         }
     }
@@ -829,10 +892,10 @@ class BlePeerCoordinator(
             status: Int,
             service: BluetoothGattService
         ) {
-            if (status == BluetoothGatt.GATT_SUCCESS) {
-                beginAdvertising()
-            } else {
-                listener.onReflectorError("GATT service 추가 실패: $status")
+            mainHandler.post {
+                if (advertisingService !== service || !advertisingStarting) return@post
+                if (status == BluetoothGatt.GATT_SUCCESS) beginAdvertising()
+                else listener.onReflectorError("GATT service 추가 실패: $status")
             }
         }
 
@@ -842,6 +905,8 @@ class BlePeerCoordinator(
             status: Int,
             newState: Int
         ) {
+            if (gattServer == null) return
+            if (newState == BluetoothProfile.STATE_DISCONNECTED && serverConnectedDevice != device) return
             if (status != BluetoothGatt.GATT_SUCCESS) {
                 listener.onReflectorError("GATT server 연결 오류: $status")
                 return
@@ -855,13 +920,8 @@ class BlePeerCoordinator(
                     listener.onSelectedPeerConnected(device.address)
                     listener.onLog("Initiator 연결됨: ${device.address}")
 
-                    try {
-                        adapter.bluetoothLeAdvertiser?.stopAdvertising(
-                            advertiseCallback
-                        )
-                        advertising = false
-                    } catch (_: Exception) {
-                    }
+                    // Keep advertising active during GATT and CS so the Initiator can scan it.
+                    listener.onLog("Advertising kept active during GATT/CS")
                 }
 
                 BluetoothProfile.STATE_DISCONNECTED -> {
@@ -892,7 +952,7 @@ class BlePeerCoordinator(
             }
 
             if (responseNeeded) {
-                gattServer?.sendResponse(
+                sendServerResponse(
                     device,
                     requestId,
                     BluetoothGatt.GATT_SUCCESS,
@@ -914,7 +974,7 @@ class BlePeerCoordinator(
         ) {
             if (preparedWrite || offset != 0) {
                 if (responseNeeded) {
-                    gattServer?.sendResponse(
+                    sendServerResponse(
                         device,
                         requestId,
                         BluetoothGatt.GATT_REQUEST_NOT_SUPPORTED,
@@ -927,7 +987,7 @@ class BlePeerCoordinator(
 
             if (device.bondState != BluetoothDevice.BOND_BONDED) {
                 if (responseNeeded) {
-                    gattServer?.sendResponse(
+                    sendServerResponse(
                         device,
                         requestId,
                         BluetoothGatt.GATT_INSUFFICIENT_AUTHENTICATION,
@@ -963,7 +1023,7 @@ class BlePeerCoordinator(
 
                 else -> {
                     if (responseNeeded) {
-                        gattServer?.sendResponse(
+                        sendServerResponse(
                             device,
                             requestId,
                             BluetoothGatt.GATT_REQUEST_NOT_SUPPORTED,
@@ -976,6 +1036,15 @@ class BlePeerCoordinator(
         }
     }
 
+    // Permission can be revoked between connection and a server write callback.
+    private fun sendServerResponse(device: BluetoothDevice, requestId: Int, status: Int, offset: Int, value: ByteArray?) {
+        try {
+            gattServer?.sendResponse(device, requestId, status, offset, value)
+        } catch (e: SecurityException) {
+            listener.onReflectorError("GATT response permission revoked: ${e.message}")
+        }
+    }
+
     private fun handleControlWrite(
         device: BluetoothDevice,
         requestId: Int,
@@ -985,7 +1054,7 @@ class BlePeerCoordinator(
         val command = value.toString(StandardCharsets.UTF_8)
 
         if (responseNeeded) {
-            gattServer?.sendResponse(
+            sendServerResponse(
                 device,
                 requestId,
                 BluetoothGatt.GATT_SUCCESS,
@@ -1011,7 +1080,7 @@ class BlePeerCoordinator(
 
         if (packet == null) {
             if (responseNeeded) {
-                gattServer?.sendResponse(
+                sendServerResponse(
                     device,
                     requestId,
                     BluetoothGatt.GATT_INVALID_ATTRIBUTE_LENGTH,
@@ -1027,7 +1096,7 @@ class BlePeerCoordinator(
         }
 
         if (responseNeeded) {
-            gattServer?.sendResponse(
+            sendServerResponse(
                 device,
                 requestId,
                 BluetoothGatt.GATT_SUCCESS,
@@ -1121,3 +1190,6 @@ class BlePeerCoordinator(
         return scan && connect && advertise
     }
 }
+
+
+

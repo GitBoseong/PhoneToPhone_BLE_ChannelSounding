@@ -1,0 +1,898 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<incidents format="6" by="lint 9.2.1" type="incidents">
+
+    <incident
+        id="NestedScrolling"
+        severity="warning"
+        message="The vertically scrolling `ScrollView` should not contain another vertically scrolling widget (`ListView`)">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+            line="44"
+            column="17"
+            startOffset="6451"
+            endLine="44"
+            endColumn="185"
+            endOffset="6619"/>
+    </incident>
+
+    <incident
+        id="GradleDependency"
+        severity="warning"
+        message="A newer version of androidx.core:core-ktx than 1.16.0 is available: 1.19.0">
+        <fix-replace
+            description="Change to 1.19.0"
+            family="Update versions"
+            oldString="1.16.0"
+            replacement="1.19.0"
+            priority="0"/>
+        <location
+            file="${:app*projectDir}/build.gradle.kts"
+            line="33"
+            column="20"
+            startOffset="625"
+            endLine="33"
+            endColumn="51"
+            endOffset="656"/>
+    </incident>
+
+    <incident
+        id="GradleDependency"
+        severity="warning"
+        message="A newer version of androidx.appcompat:appcompat than 1.7.1 is available: 1.8.0">
+        <fix-replace
+            description="Change to 1.8.0"
+            family="Update versions"
+            oldString="1.7.1"
+            replacement="1.8.0"
+            priority="0"/>
+        <location
+            file="${:app*projectDir}/build.gradle.kts"
+            line="34"
+            column="20"
+            startOffset="677"
+            endLine="34"
+            endColumn="56"
+            endOffset="713"/>
+    </incident>
+
+    <incident
+        id="Overdraw"
+        severity="warning"
+        message="Possible overdraw: Root element paints background `#F2F5F7` with a theme that also paints a background (inferred theme is `@style/Theme.PhoneCS`)">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+            line="2"
+            column="173"
+            startOffset="196"
+            endLine="2"
+            endColumn="201"
+            endOffset="224"/>
+    </incident>
+
+    <incident
+        id="SetTextI18n"
+        severity="warning"
+        message="String literal in `setText` can not be translated. Use Android resources instead.">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*javaDir*0}/com/example/ble6_channelsounding/MainActivity.kt"
+            line="106"
+            column="44"
+            startOffset="4009"
+            endLine="106"
+            endColumn="69"
+            endOffset="4034"/>
+    </incident>
+
+    <incident
+        id="SetTextI18n"
+        severity="warning"
+        message="Do not concatenate text displayed with `setText`. Use resource string with placeholders.">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*javaDir*0}/com/example/ble6_channelsounding/MainActivity.kt"
+            line="136"
+            column="47"
+            startOffset="5140"
+            endLine="136"
+            endColumn="64"
+            endOffset="5157"/>
+    </incident>
+
+    <incident
+        id="SetTextI18n"
+        severity="warning"
+        message="Do not concatenate text displayed with `setText`. Use resource string with placeholders.">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*javaDir*0}/com/example/ble6_channelsounding/MainActivity.kt"
+            line="319"
+            column="41"
+            startOffset="10673"
+            endLine="319"
+            endColumn="81"
+            endOffset="10713"/>
+    </incident>
+
+    <incident
+        id="SetTextI18n"
+        severity="warning"
+        message="String literal in `setText` can not be translated. Use Android resources instead.">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*javaDir*0}/com/example/ble6_channelsounding/MainActivity.kt"
+            line="319"
+            column="42"
+            startOffset="10674"
+            endLine="319"
+            endColumn="53"
+            endOffset="10685"/>
+    </incident>
+
+    <incident
+        id="SetTextI18n"
+        severity="warning"
+        message="String literal in `setText` can not be translated. Use Android resources instead.">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*javaDir*0}/com/example/ble6_channelsounding/MainActivity.kt"
+            line="319"
+            column="58"
+            startOffset="10690"
+            endLine="319"
+            endColumn="80"
+            endOffset="10712"/>
+    </incident>
+
+    <incident
+        id="SetTextI18n"
+        severity="warning"
+        message="Do not concatenate text displayed with `setText`. Use resource string with placeholders.">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*javaDir*0}/com/example/ble6_channelsounding/MainActivity.kt"
+            line="347"
+            column="21"
+            startOffset="11646"
+            endLine="347"
+            endColumn="46"
+            endOffset="11671"/>
+    </incident>
+
+    <incident
+        id="SetTextI18n"
+        severity="warning"
+        message="String literal in `setText` can not be translated. Use Android resources instead.">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*javaDir*0}/com/example/ble6_channelsounding/MainActivity.kt"
+            line="347"
+            column="22"
+            startOffset="11647"
+            endLine="347"
+            endColumn="37"
+            endOffset="11662"/>
+    </incident>
+
+    <incident
+        id="SetTextI18n"
+        severity="warning"
+        message="Do not concatenate text displayed with `setText`. Use resource string with placeholders.">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*javaDir*0}/com/example/ble6_channelsounding/MainActivity.kt"
+            line="350"
+            column="21"
+            startOffset="11763"
+            endLine="350"
+            endColumn="46"
+            endOffset="11788"/>
+    </incident>
+
+    <incident
+        id="SetTextI18n"
+        severity="warning"
+        message="String literal in `setText` can not be translated. Use Android resources instead.">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*javaDir*0}/com/example/ble6_channelsounding/MainActivity.kt"
+            line="350"
+            column="22"
+            startOffset="11764"
+            endLine="350"
+            endColumn="37"
+            endOffset="11779"/>
+    </incident>
+
+    <incident
+        id="SetTextI18n"
+        severity="warning"
+        message="Do not concatenate text displayed with `setText`. Use resource string with placeholders.">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*javaDir*0}/com/example/ble6_channelsounding/MainActivity.kt"
+            line="372"
+            column="17"
+            startOffset="12419"
+            endLine="372"
+            endColumn="49"
+            endOffset="12451"/>
+    </incident>
+
+    <incident
+        id="SetTextI18n"
+        severity="warning"
+        message="String literal in `setText` can not be translated. Use Android resources instead.">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*javaDir*0}/com/example/ble6_channelsounding/MainActivity.kt"
+            line="396"
+            column="45"
+            startOffset="13314"
+            endLine="396"
+            endColumn="66"
+            endOffset="13335"/>
+    </incident>
+
+    <incident
+        id="SetTextI18n"
+        severity="warning"
+        message="Do not concatenate text displayed with `setText`. Use resource string with placeholders.">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*javaDir*0}/com/example/ble6_channelsounding/MainActivity.kt"
+            line="486"
+            column="43"
+            startOffset="16198"
+            endLine="486"
+            endColumn="120"
+            endOffset="16275"/>
+    </incident>
+
+    <incident
+        id="SetTextI18n"
+        severity="warning"
+        message="String literal in `setText` can not be translated. Use Android resources instead.">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*javaDir*0}/com/example/ble6_channelsounding/MainActivity.kt"
+            line="486"
+            column="44"
+            startOffset="16199"
+            endLine="486"
+            endColumn="62"
+            endOffset="16217"/>
+    </incident>
+
+    <incident
+        id="SetTextI18n"
+        severity="warning"
+        message="Do not concatenate text displayed with `setText`. Use resource string with placeholders.">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*javaDir*0}/com/example/ble6_channelsounding/MainActivity.kt"
+            line="520"
+            column="33"
+            startOffset="17371"
+            endLine="520"
+            endColumn="84"
+            endOffset="17422"/>
+    </incident>
+
+    <incident
+        id="SetTextI18n"
+        severity="warning"
+        message="String literal in `setText` can not be translated. Use Android resources instead.">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*javaDir*0}/com/example/ble6_channelsounding/MainActivity.kt"
+            line="520"
+            column="34"
+            startOffset="17372"
+            endLine="520"
+            endColumn="48"
+            endOffset="17386"/>
+    </incident>
+
+    <incident
+        id="SetTextI18n"
+        severity="warning"
+        message="Do not concatenate text displayed with `setText`. Use resource string with placeholders.">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*javaDir*0}/com/example/ble6_channelsounding/MainActivity.kt"
+            line="610"
+            column="36"
+            startOffset="20580"
+            endLine="610"
+            endColumn="100"
+            endOffset="20644"/>
+    </incident>
+
+    <incident
+        id="SetTextI18n"
+        severity="warning"
+        message="String literal in `setText` can not be translated. Use Android resources instead.">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*javaDir*0}/com/example/ble6_channelsounding/MainActivity.kt"
+            line="610"
+            column="37"
+            startOffset="20581"
+            endLine="610"
+            endColumn="54"
+            endOffset="20598"/>
+    </incident>
+
+    <incident
+        id="SetTextI18n"
+        severity="warning"
+        message="String literal in `setText` can not be translated. Use Android resources instead.">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*javaDir*0}/com/example/ble6_channelsounding/MainActivity.kt"
+            line="610"
+            column="95"
+            startOffset="20639"
+            endLine="610"
+            endColumn="99"
+            endOffset="20643"/>
+    </incident>
+
+    <incident
+        id="SetTextI18n"
+        severity="warning"
+        message="Do not concatenate text displayed with `setText`. Use resource string with placeholders.">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*javaDir*0}/com/example/ble6_channelsounding/MainActivity.kt"
+            line="637"
+            column="40"
+            startOffset="22084"
+            endLine="637"
+            endColumn="63"
+            endOffset="22107"/>
+    </incident>
+
+    <incident
+        id="SetTextI18n"
+        severity="warning"
+        message="String literal in `setText` can not be translated. Use Android resources instead.">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*javaDir*0}/com/example/ble6_channelsounding/MainActivity.kt"
+            line="637"
+            column="41"
+            startOffset="22085"
+            endLine="637"
+            endColumn="52"
+            endOffset="22096"/>
+    </incident>
+
+    <incident
+        id="SetTextI18n"
+        severity="warning"
+        message="Do not concatenate text displayed with `setText`. Use resource string with placeholders.">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*javaDir*0}/com/example/ble6_channelsounding/MainActivity.kt"
+            line="638"
+            column="38"
+            startOffset="22145"
+            endLine="638"
+            endColumn="92"
+            endOffset="22199"/>
+    </incident>
+
+    <incident
+        id="SetTextI18n"
+        severity="warning"
+        message="String literal in `setText` can not be translated. Use Android resources instead.">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*javaDir*0}/com/example/ble6_channelsounding/MainActivity.kt"
+            line="638"
+            column="39"
+            startOffset="22146"
+            endLine="638"
+            endColumn="48"
+            endOffset="22155"/>
+    </incident>
+
+    <incident
+        id="SetTextI18n"
+        severity="warning"
+        message="Do not concatenate text displayed with `setText`. Use resource string with placeholders.">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*javaDir*0}/com/example/ble6_channelsounding/MainActivity.kt"
+            line="650"
+            column="45"
+            startOffset="22791"
+            endLine="650"
+            endColumn="90"
+            endOffset="22836"/>
+    </incident>
+
+    <incident
+        id="SetTextI18n"
+        severity="warning"
+        message="String literal in `setText` can not be translated. Use Android resources instead.">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*javaDir*0}/com/example/ble6_channelsounding/MainActivity.kt"
+            line="650"
+            column="46"
+            startOffset="22792"
+            endLine="650"
+            endColumn="52"
+            endOffset="22798"/>
+    </incident>
+
+    <incident
+        id="SetTextI18n"
+        severity="warning"
+        message="String literal in `setText` can not be translated. Use Android resources instead.">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*javaDir*0}/com/example/ble6_channelsounding/MainActivity.kt"
+            line="650"
+            column="61"
+            startOffset="22807"
+            endLine="650"
+            endColumn="66"
+            endOffset="22812"/>
+    </incident>
+
+    <incident
+        id="SetTextI18n"
+        severity="warning"
+        message="String literal in `setText` can not be translated. Use Android resources instead.">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*javaDir*0}/com/example/ble6_channelsounding/MainActivity.kt"
+            line="650"
+            column="77"
+            startOffset="22823"
+            endLine="650"
+            endColumn="81"
+            endOffset="22827"/>
+    </incident>
+
+    <incident
+        id="HardcodedText"
+        severity="warning"
+        message="Hardcoded string &quot;Phone CS&quot;, should use `@string` resource">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+            line="6"
+            column="92"
+            startOffset="473"
+            endLine="6"
+            endColumn="115"
+            endOffset="496"/>
+    </incident>
+
+    <incident
+        id="HardcodedText"
+        severity="warning"
+        message="Hardcoded string &quot;Status&quot;, should use `@string` resource">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+            line="8"
+            column="96"
+            startOffset="903"
+            endLine="8"
+            endColumn="117"
+            endOffset="924"/>
+    </incident>
+
+    <incident
+        id="HardcodedText"
+        severity="warning"
+        message="Hardcoded string &quot;Channel Sounding: Checking…&quot;, should use `@string` resource">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+            line="9"
+            column="129"
+            startOffset="1167"
+            endLine="9"
+            endColumn="171"
+            endOffset="1209"/>
+    </incident>
+
+    <incident
+        id="HardcodedText"
+        severity="warning"
+        message="Hardcoded string &quot;Role: INITIATOR BLE: Disconnected CS: Idle&quot;, should use `@string` resource">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+            line="10"
+            column="135"
+            startOffset="1399"
+            endLine="10"
+            endColumn="192"
+            endOffset="1456"/>
+    </incident>
+
+    <incident
+        id="HardcodedText"
+        severity="warning"
+        message="Hardcoded string &quot;Role&quot;, should use `@string` resource">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+            line="13"
+            column="96"
+            startOffset="1894"
+            endLine="13"
+            endColumn="115"
+            endOffset="1913"/>
+    </incident>
+
+    <incident
+        id="HardcodedText"
+        severity="warning"
+        message="Hardcoded string &quot;Initiator&quot;, should use `@string` resource">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+            line="17"
+            column="151"
+            startOffset="2358"
+            endLine="17"
+            endColumn="175"
+            endOffset="2382"/>
+    </incident>
+
+    <incident
+        id="HardcodedText"
+        severity="warning"
+        message="Hardcoded string &quot;Reflector&quot;, should use `@string` resource">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+            line="20"
+            column="162"
+            startOffset="2567"
+            endLine="20"
+            endColumn="186"
+            endOffset="2591"/>
+    </incident>
+
+    <incident
+        id="HardcodedText"
+        severity="warning"
+        message="Hardcoded string &quot;역할 적용&quot;, should use `@string` resource">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+            line="24"
+            column="128"
+            startOffset="2769"
+            endLine="24"
+            endColumn="148"
+            endOffset="2789"/>
+    </incident>
+
+    <incident
+        id="HardcodedText"
+        severity="warning"
+        message="Hardcoded string &quot;Sensor&quot;, should use `@string` resource">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+            line="27"
+            column="96"
+            startOffset="3172"
+            endLine="27"
+            endColumn="117"
+            endOffset="3193"/>
+    </incident>
+
+    <incident
+        id="HardcodedText"
+        severity="warning"
+        message="Hardcoded string &quot;IMU · 50 Hz&quot;, should use `@string` resource">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+            line="28"
+            column="146"
+            startOffset="3453"
+            endLine="28"
+            endColumn="172"
+            endOffset="3479"/>
+    </incident>
+
+    <incident
+        id="HardcodedText"
+        severity="warning"
+        message="Hardcoded string &quot;GPS · 약 1 Hz&quot;, should use `@string` resource">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+            line="29"
+            column="146"
+            startOffset="3675"
+            endLine="29"
+            endColumn="173"
+            endOffset="3702"/>
+    </incident>
+
+    <incident
+        id="HardcodedText"
+        severity="warning"
+        message="Hardcoded string &quot;Advertising TX Power&quot;, should use `@string` resource">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+            line="32"
+            column="96"
+            startOffset="4161"
+            endLine="32"
+            endColumn="131"
+            endOffset="4196"/>
+    </incident>
+
+    <incident
+        id="HardcodedText"
+        severity="warning"
+        message="Hardcoded string &quot;Requested: Default&quot;, should use `@string` resource">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+            line="33"
+            column="130"
+            startOffset="4440"
+            endLine="33"
+            endColumn="163"
+            endOffset="4473"/>
+    </incident>
+
+    <incident
+        id="HardcodedText"
+        severity="warning"
+        message="Hardcoded string &quot;Advertising TX Power: Default&quot;, should use `@string` resource">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+            line="34"
+            column="157"
+            startOffset="4685"
+            endLine="34"
+            endColumn="215"
+            endOffset="4743"/>
+    </incident>
+
+    <incident
+        id="HardcodedText"
+        severity="warning"
+        message="Hardcoded string &quot;Default · -21 … +20 dBm&quot;, should use `@string` resource">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+            line="35"
+            column="126"
+            startOffset="4872"
+            endLine="35"
+            endColumn="164"
+            endOffset="4910"/>
+    </incident>
+
+    <incident
+        id="HardcodedText"
+        severity="warning"
+        message="Hardcoded string &quot;Applied: -&quot;, should use `@string` resource">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+            line="36"
+            column="128"
+            startOffset="5092"
+            endLine="36"
+            endColumn="153"
+            endOffset="5117"/>
+    </incident>
+
+    <incident
+        id="HardcodedText"
+        severity="warning"
+        message="Hardcoded string &quot;광고 시작 전에 조절할 수 있습니다. 연결·측정 중에는 잠깁니다.&quot;, should use `@string` resource">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+            line="37"
+            column="96"
+            startOffset="5268"
+            endLine="37"
+            endColumn="147"
+            endOffset="5319"/>
+    </incident>
+
+    <incident
+        id="HardcodedText"
+        severity="warning"
+        message="Hardcoded string &quot;BLE Control&quot;, should use `@string` resource">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+            line="40"
+            column="96"
+            startOffset="5726"
+            endLine="40"
+            endColumn="122"
+            endOffset="5752"/>
+    </incident>
+
+    <incident
+        id="HardcodedText"
+        severity="warning"
+        message="Hardcoded string &quot;1. Reflector 검색&quot;, should use `@string` resource">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+            line="42"
+            column="127"
+            startOffset="6158"
+            endLine="42"
+            endColumn="157"
+            endOffset="6188"/>
+    </incident>
+
+    <incident
+        id="HardcodedText"
+        severity="warning"
+        message="Hardcoded string &quot;Available Reflectors&quot;, should use `@string` resource">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+            line="43"
+            column="100"
+            startOffset="6319"
+            endLine="43"
+            endColumn="135"
+            endOffset="6354"/>
+    </incident>
+
+    <incident
+        id="HardcodedText"
+        severity="warning"
+        message="Hardcoded string &quot;선택 장치: -&quot;, should use `@string` resource">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+            line="45"
+            column="137"
+            startOffset="6757"
+            endLine="45"
+            endColumn="160"
+            endOffset="6780"/>
+    </incident>
+
+    <incident
+        id="HardcodedText"
+        severity="warning"
+        message="Hardcoded string &quot;2. 연결 및 페어링&quot;, should use `@string` resource">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+            line="46"
+            column="127"
+            startOffset="6962"
+            endLine="46"
+            endColumn="153"
+            endOffset="6988"/>
+    </incident>
+
+    <incident
+        id="HardcodedText"
+        severity="warning"
+        message="Hardcoded string &quot;3. CS 시작&quot;, should use `@string` resource">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+            line="47"
+            column="130"
+            startOffset="7149"
+            endLine="47"
+            endColumn="153"
+            endOffset="7172"/>
+    </incident>
+
+    <incident
+        id="HardcodedText"
+        severity="warning"
+        message="Hardcoded string &quot;Start Advertising&quot;, should use `@string` resource">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+            line="50"
+            column="132"
+            startOffset="7579"
+            endLine="50"
+            endColumn="164"
+            endOffset="7611"/>
+    </incident>
+
+    <incident
+        id="HardcodedText"
+        severity="warning"
+        message="Hardcoded string &quot;연결된 Initiator: -&quot;, should use `@string` resource">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+            line="51"
+            column="136"
+            startOffset="7778"
+            endLine="51"
+            endColumn="167"
+            endOffset="7809"/>
+    </incident>
+
+    <incident
+        id="HardcodedText"
+        severity="warning"
+        message="Hardcoded string &quot;중지 / 연결 해제 · Stop Advertising&quot;, should use `@string` resource">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+            line="53"
+            column="123"
+            startOffset="8016"
+            endLine="53"
+            endColumn="167"
+            endOffset="8060"/>
+    </incident>
+
+    <incident
+        id="HardcodedText"
+        severity="warning"
+        message="Hardcoded string &quot;Measurement&quot;, should use `@string` resource">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+            line="56"
+            column="96"
+            startOffset="8443"
+            endLine="56"
+            endColumn="122"
+            endOffset="8469"/>
+    </incident>
+
+    <incident
+        id="HardcodedText"
+        severity="warning"
+        message="Hardcoded string &quot;--.--- m&quot;, should use `@string` resource">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+            line="57"
+            column="127"
+            startOffset="8710"
+            endLine="57"
+            endColumn="150"
+            endOffset="8733"/>
+    </incident>
+
+    <incident
+        id="HardcodedText"
+        severity="warning"
+        message="Hardcoded string &quot;Raw: - / Smoothed: - / Samples: 0&quot;, should use `@string` resource">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+            line="58"
+            column="130"
+            startOffset="8991"
+            endLine="58"
+            endColumn="178"
+            endOffset="9039"/>
+    </incident>
+
+    <incident
+        id="HardcodedText"
+        severity="warning"
+        message="Hardcoded string &quot;Ranging RSSI: -&quot;, should use `@string` resource">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+            line="59"
+            column="123"
+            startOffset="9242"
+            endLine="59"
+            endColumn="153"
+            endOffset="9272"/>
+    </incident>
+
+    <incident
+        id="HardcodedText"
+        severity="warning"
+        message="Hardcoded string &quot;CS 시작 시 LOG + DATA 기록 · Download/PhoneCS&quot;, should use `@string` resource">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+            line="60"
+            column="128"
+            startOffset="9511"
+            endLine="60"
+            endColumn="183"
+            endOffset="9566"/>
+    </incident>
+
+    <incident
+        id="HardcodedText"
+        severity="warning"
+        message="Hardcoded string &quot;Log&quot;, should use `@string` resource">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+            line="63"
+            column="96"
+            startOffset="10005"
+            endLine="63"
+            endColumn="114"
+            endOffset="10023"/>
+    </incident>
+
+    <incident
+        id="HardcodedText"
+        severity="warning"
+        message="Hardcoded string &quot;앱 시작&quot;, should use `@string` resource">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/layout/activity_main.xml"
+            line="64"
+            column="173"
+            startOffset="10310"
+            endLine="64"
+            endColumn="192"
+            endOffset="10329"/>
+    </incident>
+
+</incidents>

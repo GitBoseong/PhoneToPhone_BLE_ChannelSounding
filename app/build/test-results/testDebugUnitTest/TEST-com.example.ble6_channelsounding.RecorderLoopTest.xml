@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.example.ble6_channelsounding.RecorderLoopTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-09-19T06:20:41.703Z" hostname="김보성01연구실" time="30.359">
+  <properties/>
+  <testcase name="slowTickSkipsDeadlinesAndStopIsIdempotent" classname="com.example.ble6_channelsounding.RecorderLoopTest" time="0.334"/>
+  <testcase name="recordsForThirtySecondsUsingActualClock" classname="com.example.ble6_channelsounding.RecorderLoopTest" time="30.024"/>
+  <system-out><![CDATA[HOST 30s: rows=1499, duration_s=29.9809478, rate_hz=49.96506481359472, mean_ms=20.013983845126855, median_ms=15.95345, min_ms=5.3098, max_ms=43.1896, skipped=1
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

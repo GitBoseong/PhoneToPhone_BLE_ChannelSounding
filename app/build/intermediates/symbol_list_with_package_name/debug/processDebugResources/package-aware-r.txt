@@ -637,6 +637,7 @@ drawable notification_template_icon_bg
 drawable notification_template_icon_low_bg
 drawable notification_tile_bg
 drawable notify_panel_notification_icon_bg
+drawable panel_background
 drawable test_level_drawable
 drawable tooltip_frame_dark
 drawable tooltip_frame_light
@@ -714,6 +715,7 @@ id checkbox
 id checked
 id chronometer
 id collapseActionView
+id connectionStatusText
 id content
 id contentPanel
 id custom
@@ -731,6 +733,7 @@ id expand_activities_button
 id expanded_menu
 id forever
 id fragment_container_view_tag
+id gpsSwitch
 id group_divider
 id hide_ime_id
 id home
@@ -739,6 +742,7 @@ id icon
 id icon_group
 id ifRoom
 id image
+id imuSwitch
 id info
 id initiatorPanel
 id initiatorRadio
@@ -764,6 +768,7 @@ id progress_circular
 id progress_horizontal
 id radio
 id rawDistanceText
+id recordingText
 id reflectorPanel
 id reflectorPeerText
 id reflectorRadio
@@ -771,6 +776,7 @@ id report_drawn
 id right_icon
 id right_side
 id roleGroup
+id rssiText
 id scanButton
 id screen
 id scrollIndicatorDown
@@ -829,6 +835,11 @@ id titleDividerNoCustom
 id title_template
 id top
 id topPanel
+id txAppliedText
+id txPowerPanel
+id txPowerSlider
+id txRangeText
+id txRequestedText
 id unchecked
 id uniform
 id up

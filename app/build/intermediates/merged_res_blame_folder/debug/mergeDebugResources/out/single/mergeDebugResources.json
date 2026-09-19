@@ -1,5 +1,13 @@
 [
     {
+        "merged": "C:\\Users\\kimbo\\.gradle\\daemon\\9.4.1\\com.example.ble6_channelsounding.app-debug-25:\\drawable_panel_background.xml.flat",
+        "source": "C:\\Users\\kimbo\\.gradle\\daemon\\9.4.1\\com.example.ble6_channelsounding.app-main-27:\\drawable\\panel_background.xml"
+    },
+    {
+        "merged": "C:\\Users\\kimbo\\.gradle\\daemon\\9.4.1\\com.example.ble6_channelsounding.app-debug-25:\\layout_activity_main.xml.flat",
+        "source": "C:\\Users\\kimbo\\.gradle\\daemon\\9.4.1\\com.example.ble6_channelsounding.app-main-27:\\layout\\activity_main.xml"
+    },
+    {
         "merged": "com.example.ble6_channelsounding.app-debug-25:/layout_activity_main.xml.flat",
         "source": "com.example.ble6_channelsounding.app-main-27:/layout/activity_main.xml"
     }

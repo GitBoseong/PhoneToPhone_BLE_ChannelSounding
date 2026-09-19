@@ -1,0 +1,321 @@
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\res\layout\activity_main.xml:44: Warning: The vertically scrolling ScrollView should not contain another vertically scrolling widget (ListView) [NestedScrolling]
+                <ListView android:id="@+id/deviceList" android:layout_width="match_parent" android:layout_height="180dp" android:choiceMode="singleChoice" android:dividerHeight="1dp"/>
+                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+   Explanation for issues of type "NestedScrolling":
+   A scrolling widget such as a ScrollView should not contain any nested
+   scrolling widgets since this has various usability issues
+
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\build.gradle.kts:33: Warning: A newer version of androidx.core:core-ktx than 1.16.0 is available: 1.19.0 [GradleDependency]
+    implementation("androidx.core:core-ktx:1.16.0")
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\build.gradle.kts:34: Warning: A newer version of androidx.appcompat:appcompat than 1.7.1 is available: 1.8.0 [GradleDependency]
+    implementation("androidx.appcompat:appcompat:1.7.1")
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+   Explanation for issues of type "GradleDependency":
+   This detector looks for usages of libraries where the version you are using
+   is not the current stable release. Using older versions is fine, and there
+   are cases where you deliberately want to stick with an older version.
+   However, you may simply not be aware that a more recent version is
+   available, and that is what this lint check helps find.
+
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\AndroidManifest.xml:19: Warning: The attribute android:allowBackup is deprecated from Android 12 and the default allows backup [DataExtractionRules]
+        android:allowBackup="true"
+                             ~~~~
+
+   Explanation for issues of type "DataExtractionRules":
+   Before Android 12, the attributes android:allowBackup and
+   android:fullBackupContent were used to configure all forms of backup,
+   including cloud backups, device-to-device transfers and adb backup.
+
+   In Android 12 and higher, these attributes have been deprecated and will
+   only apply to cloud backups. You should instead use the attribute
+   android:dataExtractionRules, specifying an @xml resource that configures
+   which files to back up, for cloud backups and for device-to-device
+   transfers, separately. If your minSdkVersion supports older versions,
+   you'll still want to specify an android:fullBackupContent resource if the
+   default behavior is not right for your app.
+
+   https://developer.android.com/about/versions/12/backup-restore#xml-changes
+   https://goo.gle/DataExtractionRules
+
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\res\layout\activity_main.xml:2: Warning: Possible overdraw: Root element paints background #F2F5F7 with a theme that also paints a background (inferred theme is @style/Theme.PhoneCS) [Overdraw]
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:fillViewport="true" android:background="#F2F5F7">
+                                                                                                                                                                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+   Explanation for issues of type "Overdraw":
+   If you set a background drawable on a root view, then you should use a
+   custom theme where the theme background is null. Otherwise, the theme
+   background will be painted first, only to have your custom background
+   completely cover it; this is called "overdraw".
+
+   NOTE: This detector relies on figuring out which layouts are associated
+   with which activities based on scanning the Java code, and it's currently
+   doing that using an inexact pattern matching algorithm. Therefore, it can
+   incorrectly conclude which activity the layout is associated with and then
+   wrongly complain that a background-theme is hidden.
+
+   If you want your custom background on multiple pages, then you should
+   consider making a custom theme with your custom background and just using
+   that theme instead of a root element background.
+
+   Of course it's possible that your custom drawable is translucent and you
+   want it to be mixed with the background. However, you will get better
+   performance if you pre-mix the background with your drawable and use that
+   resulting image or color as a custom theme background instead.
+
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\res\values\strings.xml:3: Warning: The resource R.string.app_name appears to be unused [UnusedResources]
+    <string name="app_name">Phone CS</string>
+            ~~~~~~~~~~~~~~~
+
+   Explanation for issues of type "UnusedResources":
+   Unused resources make applications larger and slow down builds.
+
+
+   The unused resource check can ignore tests. If you want to include
+   resources that are only referenced from tests, consider packaging them in a
+   test source set instead.
+
+   You can include test sources in the unused resource check by setting the
+   system property lint.unused-resources.include-tests=true, and to exclude
+   them (usually for performance reasons), use
+   lint.unused-resources.exclude-tests=true.
+
+   Available options:
+
+   **skip-libraries** (default is true):
+   Whether the unused resource check should skip reporting unused resources in libraries.
+
+   Many libraries will declare resources that are part of the library surface; other modules depending on the library will also reference the resources. To avoid reporting all these resources as unused (in the context of a library), the unused resource check normally skips reporting unused resources in libraries. Instead, run the unused resource check on the consuming app module (along with `checkDependencies=true`).
+
+   However, there are cases where you want to check that all the resources declared in a library are used; in that case, you can disable the skip option.
+
+   To configure this option, use a `lint.xml` file with an <option> like this:
+
+   ```xml
+   <lint>
+       <issue id="UnusedResources">
+           <option name="skip-libraries" value="true" />
+       </issue>
+   </lint>
+   ```
+
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\AndroidManifest.xml:18: Warning: Should explicitly set android:icon, there is no default [MissingApplicationIcon]
+    <application
+     ~~~~~~~~~~~
+
+   Explanation for issues of type "MissingApplicationIcon":
+   You should set an icon for the application as whole because there is no
+   default. This attribute must be set as a reference to a drawable resource
+   containing the image (for example @drawable/icon).
+
+   https://developer.android.com/studio/publish/preparing#publishing-configure
+
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\java\com\example\ble6_channelsounding\MainActivity.kt:106: Warning: String literal in setText can not be translated. Use Android resources instead. [SetTextI18n]
+            binding.capabilityText.text = "Android 16 / API 36 이상 필요"
+                                           ~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\java\com\example\ble6_channelsounding\MainActivity.kt:136: Warning: Do not concatenate text displayed with setText. Use resource string with placeholders. [SetTextI18n]
+            binding.selectedDeviceText.text = "선택 장치: $address"
+                                              ~~~~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\java\com\example\ble6_channelsounding\MainActivity.kt:319: Warning: Do not concatenate text displayed with setText. Use resource string with placeholders. [SetTextI18n]
+                binding.rssiText.text = "Scan RSSI: $rssi dBm / Ranging RSSI: -"
+                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\java\com\example\ble6_channelsounding\MainActivity.kt:319: Warning: String literal in setText can not be translated. Use Android resources instead. [SetTextI18n]
+                binding.rssiText.text = "Scan RSSI: $rssi dBm / Ranging RSSI: -"
+                                         ~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\java\com\example\ble6_channelsounding\MainActivity.kt:319: Warning: String literal in setText can not be translated. Use Android resources instead. [SetTextI18n]
+                binding.rssiText.text = "Scan RSSI: $rssi dBm / Ranging RSSI: -"
+                                                         ~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\java\com\example\ble6_channelsounding\MainActivity.kt:347: Warning: Do not concatenate text displayed with setText. Use resource string with placeholders. [SetTextI18n]
+                    "연결된 Initiator: $address"
+                    ~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\java\com\example\ble6_channelsounding\MainActivity.kt:347: Warning: String literal in setText can not be translated. Use Android resources instead. [SetTextI18n]
+                    "연결된 Initiator: $address"
+                     ~~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\java\com\example\ble6_channelsounding\MainActivity.kt:350: Warning: Do not concatenate text displayed with setText. Use resource string with placeholders. [SetTextI18n]
+                    "연결된 Reflector: $address"
+                    ~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\java\com\example\ble6_channelsounding\MainActivity.kt:350: Warning: String literal in setText can not be translated. Use Android resources instead. [SetTextI18n]
+                    "연결된 Reflector: $address"
+                     ~~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\java\com\example\ble6_channelsounding\MainActivity.kt:372: Warning: Do not concatenate text displayed with setText. Use resource string with placeholders. [SetTextI18n]
+                "페어링 및 제어·거리 채널 준비 완료: $address"
+                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\java\com\example\ble6_channelsounding\MainActivity.kt:396: Warning: String literal in setText can not be translated. Use Android resources instead. [SetTextI18n]
+            binding.rawDistanceText.text = "Initiator 거리값 수신 대기 중"
+                                            ~~~~~~~~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\java\com\example\ble6_channelsounding\MainActivity.kt:486: Warning: Do not concatenate text displayed with setText. Use resource string with placeholders. [SetTextI18n]
+            binding.capabilityText.text = "Channel Sounding: ${if (supported) "Supported" else "Unavailable"}\n$detail"
+                                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\java\com\example\ble6_channelsounding\MainActivity.kt:486: Warning: String literal in setText can not be translated. Use Android resources instead. [SetTextI18n]
+            binding.capabilityText.text = "Channel Sounding: ${if (supported) "Supported" else "Unavailable"}\n$detail"
+                                           ~~~~~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\java\com\example\ble6_channelsounding\MainActivity.kt:520: Warning: Do not concatenate text displayed with setText. Use resource string with placeholders. [SetTextI18n]
+        binding.rssiText.text = "Ranging RSSI: ${rssi?.let { "$it dBm" } ?: "N/A"}"
+                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\java\com\example\ble6_channelsounding\MainActivity.kt:520: Warning: String literal in setText can not be translated. Use Android resources instead. [SetTextI18n]
+        binding.rssiText.text = "Ranging RSSI: ${rssi?.let { "$it dBm" } ?: "N/A"}"
+                                 ~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\java\com\example\ble6_channelsounding\MainActivity.kt:610: Warning: Do not concatenate text displayed with setText. Use resource string with placeholders. [SetTextI18n]
+        binding.txRangeText.text = "Default · -21 … +${BlePeerCoordinator.maxAdvertisingTxDbm} dBm"
+                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\java\com\example\ble6_channelsounding\MainActivity.kt:610: Warning: String literal in setText can not be translated. Use Android resources instead. [SetTextI18n]
+        binding.txRangeText.text = "Default · -21 … +${BlePeerCoordinator.maxAdvertisingTxDbm} dBm"
+                                    ~~~~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\java\com\example\ble6_channelsounding\MainActivity.kt:610: Warning: String literal in setText can not be translated. Use Android resources instead. [SetTextI18n]
+        binding.txRangeText.text = "Default · -21 … +${BlePeerCoordinator.maxAdvertisingTxDbm} dBm"
+                                                                                              ~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\java\com\example\ble6_channelsounding\MainActivity.kt:637: Warning: Do not concatenate text displayed with setText. Use resource string with placeholders. [SetTextI18n]
+        binding.txRequestedText.text = "Requested: $requested"
+                                       ~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\java\com\example\ble6_channelsounding\MainActivity.kt:637: Warning: String literal in setText can not be translated. Use Android resources instead. [SetTextI18n]
+        binding.txRequestedText.text = "Requested: $requested"
+                                        ~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\java\com\example\ble6_channelsounding\MainActivity.kt:638: Warning: Do not concatenate text displayed with setText. Use resource string with placeholders. [SetTextI18n]
+        binding.txAppliedText.text = "Applied: ${appliedTxPower?.let { "$it dBm" } ?: "-"}"
+                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\java\com\example\ble6_channelsounding\MainActivity.kt:638: Warning: String literal in setText can not be translated. Use Android resources instead. [SetTextI18n]
+        binding.txAppliedText.text = "Applied: ${appliedTxPower?.let { "$it dBm" } ?: "-"}"
+                                      ~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\java\com\example\ble6_channelsounding\MainActivity.kt:650: Warning: Do not concatenate text displayed with setText. Use resource string with placeholders. [SetTextI18n]
+        binding.connectionStatusText.text = "Role: $uiRole\nBLE: $bleState\nCS: $csState"
+                                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\java\com\example\ble6_channelsounding\MainActivity.kt:650: Warning: String literal in setText can not be translated. Use Android resources instead. [SetTextI18n]
+        binding.connectionStatusText.text = "Role: $uiRole\nBLE: $bleState\nCS: $csState"
+                                             ~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\java\com\example\ble6_channelsounding\MainActivity.kt:650: Warning: String literal in setText can not be translated. Use Android resources instead. [SetTextI18n]
+        binding.connectionStatusText.text = "Role: $uiRole\nBLE: $bleState\nCS: $csState"
+                                                            ~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\java\com\example\ble6_channelsounding\MainActivity.kt:650: Warning: String literal in setText can not be translated. Use Android resources instead. [SetTextI18n]
+        binding.connectionStatusText.text = "Role: $uiRole\nBLE: $bleState\nCS: $csState"
+                                                                            ~~~~
+
+   Explanation for issues of type "SetTextI18n":
+   When calling TextView#setText
+   * Never call Number#toString() to format numbers; it will not handle
+   fraction separators and locale-specific digits properly. Consider using
+   String#format with proper format specifications (%d or %f) instead.
+   * Do not pass a string literal (e.g. "Hello") to display text. Hardcoded
+   text can not be properly translated to other languages. Consider using
+   Android resource strings instead.
+   * Do not build messages by concatenating text chunks. Such messages can not
+   be properly translated.
+
+   https://developer.android.com/guide/topics/resources/localization.html
+
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\res\layout\activity_main.xml:6: Warning: Hardcoded string "Phone CS", should use @string resource [HardcodedText]
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Phone CS" android:textSize="26sp" android:textColor="#172B3A" android:textStyle="bold"/>
+                                                                                           ~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\res\layout\activity_main.xml:8: Warning: Hardcoded string "Status", should use @string resource [HardcodedText]
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Status" android:textSize="16sp" android:textColor="#172B3A" android:textStyle="bold" android:layout_marginBottom="8dp"/>
+                                                                                               ~~~~~~~~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\res\layout\activity_main.xml:9: Warning: Hardcoded string "Channel Sounding: Checking…", should use @string resource [HardcodedText]
+            <TextView android:id="@+id/capabilityText" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Channel Sounding: Checking…" android:textSize="14sp" android:textColor="#172B3A"/>
+                                                                                                                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\res\layout\activity_main.xml:10: Warning: Hardcoded string "Role: INITIATOR BLE: Disconnected CS: Idle", should use @string resource [HardcodedText]
+            <TextView android:id="@+id/connectionStatusText" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Role: INITIATOR BLE: Disconnected CS: Idle" android:textSize="14sp" android:textColor="#172B3A" android:layout_marginTop="8dp"/>
+                                                                                                                                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\res\layout\activity_main.xml:13: Warning: Hardcoded string "Role", should use @string resource [HardcodedText]
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Role" android:textSize="16sp" android:textColor="#172B3A" android:textStyle="bold" android:layout_marginBottom="8dp"/>
+                                                                                               ~~~~~~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\res\layout\activity_main.xml:17: Warning: Hardcoded string "Initiator", should use @string resource [HardcodedText]
+                <RadioButton android:id="@+id/initiatorRadio" android:layout_width="wrap_content" android:layout_height="48dp" android:checked="true" android:text="Initiator"/>
+                                                                                                                                                      ~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\res\layout\activity_main.xml:20: Warning: Hardcoded string "Reflector", should use @string resource [HardcodedText]
+                <RadioButton android:id="@+id/reflectorRadio" android:layout_width="wrap_content" android:layout_height="48dp" android:layout_marginStart="20dp" android:text="Reflector"/>
+                                                                                                                                                                 ~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\res\layout\activity_main.xml:24: Warning: Hardcoded string "역할 적용", should use @string resource [HardcodedText]
+            <Button android:id="@+id/applyRoleButton" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="역할 적용" android:textAllCaps="false"/>
+                                                                                                                               ~~~~~~~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\res\layout\activity_main.xml:27: Warning: Hardcoded string "Sensor", should use @string resource [HardcodedText]
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Sensor" android:textSize="16sp" android:textColor="#172B3A" android:textStyle="bold" android:layout_marginBottom="8dp"/>
+                                                                                               ~~~~~~~~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\res\layout\activity_main.xml:28: Warning: Hardcoded string "IMU · 50 Hz", should use @string resource [HardcodedText]
+            <androidx.appcompat.widget.SwitchCompat android:id="@+id/imuSwitch" android:layout_width="match_parent" android:layout_height="48dp" android:text="IMU · 50 Hz" android:checked="true" android:textSize="16sp"/>
+                                                                                                                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\res\layout\activity_main.xml:29: Warning: Hardcoded string "GPS · 약 1 Hz", should use @string resource [HardcodedText]
+            <androidx.appcompat.widget.SwitchCompat android:id="@+id/gpsSwitch" android:layout_width="match_parent" android:layout_height="48dp" android:text="GPS · 약 1 Hz" android:checked="true" android:textSize="16sp"/>
+                                                                                                                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\res\layout\activity_main.xml:32: Warning: Hardcoded string "Advertising TX Power", should use @string resource [HardcodedText]
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Advertising TX Power" android:textSize="16sp" android:textColor="#172B3A" android:textStyle="bold" android:layout_marginBottom="8dp"/>
+                                                                                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\res\layout\activity_main.xml:33: Warning: Hardcoded string "Requested: Default", should use @string resource [HardcodedText]
+            <TextView android:id="@+id/txRequestedText" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Requested: Default" android:textSize="18sp" android:textColor="#172B3A"/>
+                                                                                                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\res\layout\activity_main.xml:34: Warning: Hardcoded string "Advertising TX Power: Default", should use @string resource [HardcodedText]
+            <SeekBar android:id="@+id/txPowerSlider" android:layout_width="match_parent" android:layout_height="48dp" android:max="23" android:progress="0" android:contentDescription="Advertising TX Power: Default"/>
+                                                                                                                                                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\res\layout\activity_main.xml:35: Warning: Hardcoded string "Default · -21 … +20 dBm", should use @string resource [HardcodedText]
+            <TextView android:id="@+id/txRangeText" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Default · -21 … +20 dBm" android:textSize="14sp" android:textColor="#172B3A"/>
+                                                                                                                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\res\layout\activity_main.xml:36: Warning: Hardcoded string "Applied: -", should use @string resource [HardcodedText]
+            <TextView android:id="@+id/txAppliedText" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Applied: -" android:textSize="14sp" android:textColor="#172B3A"/>
+                                                                                                                               ~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\res\layout\activity_main.xml:37: Warning: Hardcoded string "광고 시작 전에 조절할 수 있습니다. 연결·측정 중에는 잠깁니다.", should use @string resource [HardcodedText]
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="광고 시작 전에 조절할 수 있습니다. 연결·측정 중에는 잠깁니다." android:textSize="12sp" android:textColor="#172B3A"/>
+                                                                                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\res\layout\activity_main.xml:40: Warning: Hardcoded string "BLE Control", should use @string resource [HardcodedText]
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="BLE Control" android:textSize="16sp" android:textColor="#172B3A" android:textStyle="bold" android:layout_marginBottom="8dp"/>
+                                                                                               ~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\res\layout\activity_main.xml:42: Warning: Hardcoded string "1. Reflector 검색", should use @string resource [HardcodedText]
+                <Button android:id="@+id/scanButton" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="1. Reflector 검색" android:textAllCaps="false"/>
+                                                                                                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\res\layout\activity_main.xml:43: Warning: Hardcoded string "Available Reflectors", should use @string resource [HardcodedText]
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Available Reflectors" android:textSize="14sp" android:textColor="#172B3A" android:textStyle="bold"/>
+                                                                                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\res\layout\activity_main.xml:45: Warning: Hardcoded string "선택 장치: -", should use @string resource [HardcodedText]
+                <TextView android:id="@+id/selectedDeviceText" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="선택 장치: -" android:textSize="14sp" android:textColor="#172B3A"/>
+                                                                                                                                        ~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\res\layout\activity_main.xml:46: Warning: Hardcoded string "2. 연결 및 페어링", should use @string resource [HardcodedText]
+                <Button android:id="@+id/pairButton" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="2. 연결 및 페어링" android:textAllCaps="false"/>
+                                                                                                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\res\layout\activity_main.xml:47: Warning: Hardcoded string "3. CS 시작", should use @string resource [HardcodedText]
+                <Button android:id="@+id/startCsButton" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="3. CS 시작" android:textAllCaps="false" android:enabled="false"/>
+                                                                                                                                 ~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\res\layout\activity_main.xml:50: Warning: Hardcoded string "Start Advertising", should use @string resource [HardcodedText]
+                <Button android:id="@+id/advertiseButton" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Start Advertising" android:textAllCaps="false"/>
+                                                                                                                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\res\layout\activity_main.xml:51: Warning: Hardcoded string "연결된 Initiator: -", should use @string resource [HardcodedText]
+                <TextView android:id="@+id/reflectorPeerText" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="연결된 Initiator: -" android:textSize="14sp" android:textColor="#172B3A"/>
+                                                                                                                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\res\layout\activity_main.xml:53: Warning: Hardcoded string "중지 / 연결 해제 · Stop Advertising", should use @string resource [HardcodedText]
+            <Button android:id="@+id/stopButton" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="중지 / 연결 해제 · Stop Advertising" android:textAllCaps="false"/>
+                                                                                                                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\res\layout\activity_main.xml:56: Warning: Hardcoded string "Measurement", should use @string resource [HardcodedText]
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Measurement" android:textSize="16sp" android:textColor="#172B3A" android:textStyle="bold" android:layout_marginBottom="8dp"/>
+                                                                                               ~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\res\layout\activity_main.xml:57: Warning: Hardcoded string "--.--- m", should use @string resource [HardcodedText]
+            <TextView android:id="@+id/distanceText" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="--.--- m" android:textSize="44sp" android:textColor="#172B3A" android:gravity="center" android:textStyle="bold" android:padding="12dp"/>
+                                                                                                                              ~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\res\layout\activity_main.xml:58: Warning: Hardcoded string "Raw: - / Smoothed: - / Samples: 0", should use @string resource [HardcodedText]
+            <TextView android:id="@+id/rawDistanceText" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Raw: - / Smoothed: - / Samples: 0" android:textSize="14sp" android:textColor="#172B3A" android:gravity="center"/>
+                                                                                                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\res\layout\activity_main.xml:59: Warning: Hardcoded string "Ranging RSSI: -", should use @string resource [HardcodedText]
+            <TextView android:id="@+id/rssiText" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Ranging RSSI: -" android:textSize="14sp" android:textColor="#172B3A" android:gravity="center" android:layout_marginTop="8dp"/>
+                                                                                                                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\res\layout\activity_main.xml:60: Warning: Hardcoded string "CS 시작 시 LOG + DATA 기록 · Download/PhoneCS", should use @string resource [HardcodedText]
+            <TextView android:id="@+id/recordingText" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="CS 시작 시 LOG + DATA 기록 · Download/PhoneCS" android:textSize="12sp" android:textColor="#172B3A" android:layout_marginTop="12dp"/>
+                                                                                                                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\res\layout\activity_main.xml:63: Warning: Hardcoded string "Log", should use @string resource [HardcodedText]
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Log" android:textSize="16sp" android:textColor="#172B3A" android:textStyle="bold" android:layout_marginBottom="8dp"/>
+                                                                                               ~~~~~~~~~~~~~~~~~~
+C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\res\layout\activity_main.xml:64: Warning: Hardcoded string "앱 시작", should use @string resource [HardcodedText]
+            <TextView android:id="@+id/statusText" android:layout_width="match_parent" android:layout_height="160dp" android:scrollbars="vertical" android:gravity="bottom" android:text="앱 시작" android:textSize="12sp" android:fontFamily="monospace" android:textIsSelectable="true"/>
+                                                                                                                                                                            ~~~~~~~~~~~~~~~~~~~
+
+   Explanation for issues of type "HardcodedText":
+   Hardcoding text attributes directly in layout files is bad for several
+   reasons:
+
+   * When creating configuration variations (for example for landscape or
+   portrait) you have to repeat the actual text (and keep it up to date when
+   making changes)
+
+   * The application cannot be translated to other languages by just adding
+   new translations for existing string resources.
+
+   There are quickfixes to automatically extract this hardcoded string into a
+   resource lookup.
+
+0 errors, 66 warnings

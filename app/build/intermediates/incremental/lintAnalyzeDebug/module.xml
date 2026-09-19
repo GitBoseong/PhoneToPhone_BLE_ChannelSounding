@@ -1,0 +1,20 @@
+<lint-module
+    format="1"
+    dir="C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app"
+    name=":app"
+    type="APP"
+    maven="PhoneToPhoneChannelSounding:app:unspecified"
+    agpVersion="9.2.1"
+    buildFolder="build"
+    bootClassPath="C:\Users\kimbo\AppData\Local\Android\Sdk\platforms\android-37.0\android.jar;C:\Users\kimbo\AppData\Local\Android\Sdk\build-tools\36.0.0\core-lambda-stubs.jar"
+    javaSourceLevel="17"
+    compileTarget="android-37.0"
+    neverShrinking="true"
+    highlightGradualR8Api="false">
+  <lintOptions
+      abortOnError="true"
+      absolutePaths="true"
+      checkReleaseBuilds="true"
+      explainIssues="true"/>
+  <variant name="debug"/>
+</lint-module>

@@ -1,167 +1,67 @@
-<?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:fillViewport="true">
+<?xml version="1.0" ?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:fillViewport="true" android:background="#F2F5F7">
+    
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="20dp">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Phone-to-Phone Bluetooth Channel Sounding"
-            android:textSize="22sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/capabilityText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="CS capability: checking..." />
-
-        <RadioGroup
-            android:id="@+id/roleGroup"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:orientation="horizontal">
-
-            <RadioButton
-                android:id="@+id/initiatorRadio"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:checked="true"
-                android:text="Initiator" />
-
-            <RadioButton
-                android:id="@+id/reflectorRadio"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="20dp"
-                android:text="Reflector" />
-        </RadioGroup>
-
-        <Button
-            android:id="@+id/applyRoleButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="역할 적용" />
-
-        <LinearLayout
-            android:id="@+id/initiatorPanel"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:orientation="vertical">
-
-            <Button
-                android:id="@+id/scanButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="1. Reflector 검색" />
-
-            <ListView
-                android:id="@+id/deviceList"
-                android:layout_width="match_parent"
-                android:layout_height="180dp"
-                android:choiceMode="singleChoice"
-                android:dividerHeight="1dp" />
-
-            <TextView
-                android:id="@+id/selectedDeviceText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="선택 장치: -" />
-
-            <Button
-                android:id="@+id/pairButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="2. 연결 및 페어링" />
-
-            <Button
-                android:id="@+id/startCsButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:enabled="false"
-                android:text="3. CS 시작" />
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="20dp">
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Phone CS" android:textSize="26sp" android:textColor="#172B3A" android:textStyle="bold"/>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp" android:layout_marginTop="12dp" android:background="@drawable/panel_background">
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Status" android:textSize="16sp" android:textColor="#172B3A" android:textStyle="bold" android:layout_marginBottom="8dp"/>
+            <TextView android:id="@+id/capabilityText" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Channel Sounding: Checking…" android:textSize="14sp" android:textColor="#172B3A"/>
+            <TextView android:id="@+id/connectionStatusText" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Role: INITIATOR BLE: Disconnected CS: Idle" android:textSize="14sp" android:textColor="#172B3A" android:layout_marginTop="8dp"/>
         </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp" android:layout_marginTop="12dp" android:background="@drawable/panel_background">
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Role" android:textSize="16sp" android:textColor="#172B3A" android:textStyle="bold" android:layout_marginBottom="8dp"/>
+            <RadioGroup android:id="@+id/roleGroup" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+                
 
-        <LinearLayout
-            android:id="@+id/reflectorPanel"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:orientation="vertical"
-            android:visibility="gone">
+                <RadioButton android:id="@+id/initiatorRadio" android:layout_width="wrap_content" android:layout_height="48dp" android:checked="true" android:text="Initiator"/>
+                
 
-            <Button
-                android:id="@+id/advertiseButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Reflector 광고 시작" />
+                <RadioButton android:id="@+id/reflectorRadio" android:layout_width="wrap_content" android:layout_height="48dp" android:layout_marginStart="20dp" android:text="Reflector"/>
+                
 
-            <TextView
-                android:id="@+id/reflectorPeerText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="연결된 Initiator: -" />
+            </RadioGroup>
+            <Button android:id="@+id/applyRoleButton" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="역할 적용" android:textAllCaps="false"/>
         </LinearLayout>
-
-        <Button
-            android:id="@+id/stopButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="중지 / 연결 해제" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="22dp"
-            android:text="Distance"
-            android:textSize="16sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/distanceText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:padding="18dp"
-            android:text="--.-- m"
-            android:textSize="36sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/rawDistanceText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:text="Raw: - / samples: 0" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="22dp"
-            android:text="상태 로그"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/statusText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:minHeight="180dp"
-            android:padding="12dp"
-            android:text="앱 시작"
-            android:textIsSelectable="true" />
-
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp" android:layout_marginTop="12dp" android:background="@drawable/panel_background">
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Sensor" android:textSize="16sp" android:textColor="#172B3A" android:textStyle="bold" android:layout_marginBottom="8dp"/>
+            <androidx.appcompat.widget.SwitchCompat android:id="@+id/imuSwitch" android:layout_width="match_parent" android:layout_height="48dp" android:text="IMU · 50 Hz" android:checked="true" android:textSize="16sp"/>
+            <androidx.appcompat.widget.SwitchCompat android:id="@+id/gpsSwitch" android:layout_width="match_parent" android:layout_height="48dp" android:text="GPS · 약 1 Hz" android:checked="true" android:textSize="16sp"/>
+        </LinearLayout>
+        <LinearLayout android:id="@+id/txPowerPanel" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp" android:layout_marginTop="12dp" android:background="@drawable/panel_background" android:visibility="gone">
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Advertising TX Power" android:textSize="16sp" android:textColor="#172B3A" android:textStyle="bold" android:layout_marginBottom="8dp"/>
+            <TextView android:id="@+id/txRequestedText" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Requested: Default" android:textSize="18sp" android:textColor="#172B3A"/>
+            <SeekBar android:id="@+id/txPowerSlider" android:layout_width="match_parent" android:layout_height="48dp" android:max="23" android:progress="0" android:contentDescription="Advertising TX Power: Default"/>
+            <TextView android:id="@+id/txRangeText" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Default · -21 … +20 dBm" android:textSize="14sp" android:textColor="#172B3A"/>
+            <TextView android:id="@+id/txAppliedText" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Applied: -" android:textSize="14sp" android:textColor="#172B3A"/>
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="광고 시작 전에 조절할 수 있습니다. 연결·측정 중에는 잠깁니다." android:textSize="12sp" android:textColor="#172B3A"/>
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp" android:layout_marginTop="12dp" android:background="@drawable/panel_background">
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="BLE Control" android:textSize="16sp" android:textColor="#172B3A" android:textStyle="bold" android:layout_marginBottom="8dp"/>
+            <LinearLayout android:id="@+id/initiatorPanel" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
+                <Button android:id="@+id/scanButton" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="1. Reflector 검색" android:textAllCaps="false"/>
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Available Reflectors" android:textSize="14sp" android:textColor="#172B3A" android:textStyle="bold"/>
+                <ListView android:id="@+id/deviceList" android:layout_width="match_parent" android:layout_height="180dp" android:choiceMode="singleChoice" android:dividerHeight="1dp"/>
+                <TextView android:id="@+id/selectedDeviceText" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="선택 장치: -" android:textSize="14sp" android:textColor="#172B3A"/>
+                <Button android:id="@+id/pairButton" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="2. 연결 및 페어링" android:textAllCaps="false"/>
+                <Button android:id="@+id/startCsButton" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="3. CS 시작" android:textAllCaps="false" android:enabled="false"/>
+            </LinearLayout>
+            <LinearLayout android:id="@+id/reflectorPanel" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone">
+                <Button android:id="@+id/advertiseButton" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Start Advertising" android:textAllCaps="false"/>
+                <TextView android:id="@+id/reflectorPeerText" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="연결된 Initiator: -" android:textSize="14sp" android:textColor="#172B3A"/>
+            </LinearLayout>
+            <Button android:id="@+id/stopButton" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="중지 / 연결 해제 · Stop Advertising" android:textAllCaps="false"/>
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp" android:layout_marginTop="12dp" android:background="@drawable/panel_background">
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Measurement" android:textSize="16sp" android:textColor="#172B3A" android:textStyle="bold" android:layout_marginBottom="8dp"/>
+            <TextView android:id="@+id/distanceText" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="--.--- m" android:textSize="44sp" android:textColor="#172B3A" android:gravity="center" android:textStyle="bold" android:padding="12dp"/>
+            <TextView android:id="@+id/rawDistanceText" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Raw: - / Smoothed: - / Samples: 0" android:textSize="14sp" android:textColor="#172B3A" android:gravity="center"/>
+            <TextView android:id="@+id/rssiText" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Ranging RSSI: -" android:textSize="14sp" android:textColor="#172B3A" android:gravity="center" android:layout_marginTop="8dp"/>
+            <TextView android:id="@+id/recordingText" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="CS 시작 시 LOG + DATA 기록 · Download/PhoneCS" android:textSize="12sp" android:textColor="#172B3A" android:layout_marginTop="12dp"/>
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp" android:layout_marginTop="12dp" android:background="@drawable/panel_background">
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Log" android:textSize="16sp" android:textColor="#172B3A" android:textStyle="bold" android:layout_marginBottom="8dp"/>
+            <TextView android:id="@+id/statusText" android:layout_width="match_parent" android:layout_height="160dp" android:scrollbars="vertical" android:gravity="bottom" android:text="앱 시작" android:textSize="12sp" android:fontFamily="monospace" android:textIsSelectable="true"/>
+        </LinearLayout>
     </LinearLayout>
 </ScrollView>

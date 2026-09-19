@@ -5,12 +5,12 @@ plugins {
 
 android {
     namespace = "com.example.ble6_channelsounding"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.example.ble6_channelsounding"
         minSdk = 31
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 1
         versionName = "1.0"
     }
@@ -32,4 +32,6 @@ android {
 dependencies {
     implementation("androidx.core:core-ktx:1.16.0")
     implementation("androidx.appcompat:appcompat:1.7.1")
+    testImplementation("junit:junit:4.13.2")
 }
+

@@ -1,23 +1,34 @@
 R_DEF: Internal format may change without notice
 local
+drawable panel_background
 id advertiseButton
 id applyRoleButton
 id capabilityText
+id connectionStatusText
 id deviceList
 id distanceText
+id gpsSwitch
+id imuSwitch
 id initiatorPanel
 id initiatorRadio
 id pairButton
 id rawDistanceText
+id recordingText
 id reflectorPanel
 id reflectorPeerText
 id reflectorRadio
 id roleGroup
+id rssiText
 id scanButton
 id selectedDeviceText
 id startCsButton
 id statusText
 id stopButton
+id txAppliedText
+id txPowerPanel
+id txPowerSlider
+id txRangeText
+id txRequestedText
 layout activity_main
 string app_name
 style Theme.PhoneCS
