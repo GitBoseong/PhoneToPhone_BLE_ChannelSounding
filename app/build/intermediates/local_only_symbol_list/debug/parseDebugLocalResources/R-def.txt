@@ -11,7 +11,10 @@ id gpsSwitch
 id imuSwitch
 id initiatorPanel
 id initiatorRadio
+id nordicPeerRadio
 id pairButton
+id peerTypeGroup
+id phoneCsPeerRadio
 id rawDistanceText
 id recordingText
 id reflectorPanel
@@ -20,6 +23,10 @@ id reflectorRadio
 id roleGroup
 id rssiText
 id scanButton
+id secLevel0Radio
+id secLevel1Radio
+id securityLevelContainer
+id securityLevelGroup
 id selectedDeviceText
 id startCsButton
 id statusText

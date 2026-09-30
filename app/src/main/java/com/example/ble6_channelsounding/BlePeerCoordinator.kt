@@ -19,7 +19,6 @@ import android.bluetooth.le.AdvertisingSetCallback
 import android.bluetooth.le.AdvertisingSetParameters
 import android.bluetooth.le.AdvertiseData
 import android.bluetooth.le.ScanCallback
-import android.bluetooth.le.ScanFilter
 import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
 import android.content.BroadcastReceiver
@@ -80,6 +79,16 @@ class BlePeerCoordinator(
     private val mainHandler = Handler(Looper.getMainLooper())
 
     private var selectedDevice: BluetoothDevice? = null
+
+    /* Hardware Reflector (e.g. Nordic nRF54L15 DK) 여부 */
+    var isHardwareReflector: Boolean = false
+        private set
+
+    val hasControlChannel: Boolean
+        get() = controlCharacteristic != null
+
+    val isGattConnected: Boolean
+        get() = clientGatt != null
 
     /* Initiator 쪽 GATT client */
     private var clientGatt: BluetoothGatt? = null
@@ -149,16 +158,12 @@ class BlePeerCoordinator(
 
         stopScan()
 
-        val filter = ScanFilter.Builder()
-            .setServiceUuid(ParcelUuid(CsProtocol.SERVICE_UUID))
-            .build()
-
         val settings = ScanSettings.Builder()
             .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
             .build()
 
         adapter.bluetoothLeScanner?.startScan(
-            listOf(filter),
+            emptyList(),
             settings,
             scanCallback
         ) ?: run {
@@ -166,7 +171,7 @@ class BlePeerCoordinator(
             return
         }
 
-        listener.onLog("Reflector 스캔 시작")
+        listener.onLog("Reflector 스캔 시작 ('Reflector' 필터 적용)")
     }
 
     @SuppressLint("MissingPermission")
@@ -464,10 +469,19 @@ class BlePeerCoordinator(
     }
 
     @SuppressLint("MissingPermission")
+    fun closeClientGattOnly() {
+        if (clientGatt != null) {
+            listener.onLog("Hardware Reflector CS 시작 전 GATT 연결 해제")
+            closeClientGatt()
+        }
+    }
+
+    @SuppressLint("MissingPermission")
     private fun closeClientGatt() {
         cancelPendingDiscovery()
         clearWriteQueue()
 
+        isHardwareReflector = false
         val gatt = clientGatt
 
         clientGatt = null
@@ -493,6 +507,7 @@ class BlePeerCoordinator(
         clearWriteQueue()
 
         if (clientGatt === gatt) {
+            isHardwareReflector = false
             clientGatt = null
             controlCharacteristic = null
             statusCharacteristic = null
@@ -664,13 +679,28 @@ class BlePeerCoordinator(
         @SuppressLint("MissingPermission")
         override fun onScanResult(callbackType: Int, result: ScanResult) {
             val device = result.device
-            val name = result.scanRecord?.deviceName
-                ?: device.name
-                ?: "Phone CS Reflector"
+            val scanRecord = result.scanRecord
+            val rawName = scanRecord?.deviceName ?: device.name
+
+            val serviceUuids = scanRecord?.serviceUuids
+            val isPhoneCs = serviceUuids?.contains(ParcelUuid(CsProtocol.SERVICE_UUID)) == true
+            val isReflectorName = rawName != null && rawName.contains("Reflector", ignoreCase = true)
+
+            // Only report devices named 'Reflector' or advertising Phone CS service
+            if (!isReflectorName && !isPhoneCs) {
+                return
+            }
+
+            val displayName = rawName ?: "Reflector"
+            val name = if (isPhoneCs && !displayName.contains("[Phone CS]")) {
+                "$displayName [Phone CS]"
+            } else {
+                displayName
+            }
 
             // Legacy AD TX Power is in ScanRecord; extended reports may expose ScanResult.txPower.
             val reported = result.txPower.takeUnless { it == ScanResult.TX_POWER_NOT_PRESENT }
-            val packetPower = result.scanRecord?.txPowerLevel?.takeUnless { it == Int.MIN_VALUE }
+            val packetPower = scanRecord?.txPowerLevel?.takeUnless { it == Int.MIN_VALUE }
             val power = reported ?: packetPower
             val epoch = System.currentTimeMillis() +
                 (result.timestampNanos - android.os.SystemClock.elapsedRealtimeNanos()) / 1_000_000L
@@ -748,14 +778,22 @@ class BlePeerCoordinator(
 
             val service = gatt.getService(CsProtocol.SERVICE_UUID)
 
+            if (service == null) {
+                isHardwareReflector = true
+                listener.onLog("Phone CS 서비스 없음 - 하드웨어 CS Reflector (Nordic 등) 감지됨")
+                listener.onControlChannelReady(gatt.device.address)
+                return
+            }
+
+            isHardwareReflector = false
             controlCharacteristic =
-                service?.getCharacteristic(CsProtocol.CONTROL_UUID)
+                service.getCharacteristic(CsProtocol.CONTROL_UUID)
 
             statusCharacteristic =
-                service?.getCharacteristic(CsProtocol.STATUS_UUID)
+                service.getCharacteristic(CsProtocol.STATUS_UUID)
 
             distanceCharacteristic =
-                service?.getCharacteristic(CsProtocol.DISTANCE_UUID)
+                service.getCharacteristic(CsProtocol.DISTANCE_UUID)
 
             val statusChar = statusCharacteristic
 

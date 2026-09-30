@@ -3078,6 +3078,42 @@
                     }
                 },
                 {
+                    "source": "C:\\Users\\kimbo\\NNL\\workspace\\app-workspace\\BLE_CS_PhoneToPhone\\app\\src\\main\\res\\values\\strings.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "57",
+                        "endColumns": "45",
+                        "endOffsets": "98"
+                    },
+                    "to": {
+                        "startLines": "302",
+                        "startColumns": "4",
+                        "startOffsets": "19586",
+                        "endColumns": "45",
+                        "endOffsets": "19627"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\kimbo\\NNL\\workspace\\app-workspace\\BLE_CS_PhoneToPhone\\app\\src\\main\\res\\values\\themes.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "57",
+                        "endLines": "6",
+                        "endColumns": "12",
+                        "endOffsets": "307"
+                    },
+                    "to": {
+                        "startLines": "1718",
+                        "startColumns": "4",
+                        "startOffsets": "113987",
+                        "endLines": "1722",
+                        "endColumns": "12",
+                        "endOffsets": "114233"
+                    }
+                },
+                {
                     "source": "C:\\Users\\kimbo\\.gradle\\caches\\9.4.1\\transforms\\ca96ef2daa5869a61fc4b4ba066d0f32\\transformed\\activity-1.8.0\\res\\values\\values.xml",
                     "from": {
                         "startLines": "2,3",
@@ -3111,25 +3147,6 @@
                         "endLines": "1961,1967,1977,2950,2954",
                         "endColumns": "24,24,24,24,24",
                         "endOffsets": "127496,127674,127958,160495,160622"
-                    }
-                },
-                {
-                    "source": "C:\\Users\\kimbo\\NNL\\workspace\\app-workspace\\PhoneToPhoneChannelSounding\\app\\src\\main\\res\\values\\themes.xml",
-                    "from": {
-                        "startLines": "2",
-                        "startColumns": "4",
-                        "startOffsets": "57",
-                        "endLines": "6",
-                        "endColumns": "12",
-                        "endOffsets": "307"
-                    },
-                    "to": {
-                        "startLines": "1718",
-                        "startColumns": "4",
-                        "startOffsets": "113987",
-                        "endLines": "1722",
-                        "endColumns": "12",
-                        "endOffsets": "114233"
                     }
                 },
                 {
@@ -3200,23 +3217,6 @@
                         "startOffsets": "17010",
                         "endColumns": "42",
                         "endOffsets": "17048"
-                    }
-                },
-                {
-                    "source": "C:\\Users\\kimbo\\NNL\\workspace\\app-workspace\\PhoneToPhoneChannelSounding\\app\\src\\main\\res\\values\\strings.xml",
-                    "from": {
-                        "startLines": "2",
-                        "startColumns": "4",
-                        "startOffsets": "57",
-                        "endColumns": "45",
-                        "endOffsets": "98"
-                    },
-                    "to": {
-                        "startLines": "302",
-                        "startColumns": "4",
-                        "startOffsets": "19586",
-                        "endColumns": "45",
-                        "endOffsets": "19627"
                     }
                 },
                 {

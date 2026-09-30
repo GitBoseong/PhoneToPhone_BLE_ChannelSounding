@@ -57,7 +57,16 @@ public final class ActivityMainBinding implements ViewBinding {
   public final RadioButton initiatorRadio;
 
   @NonNull
+  public final RadioButton nordicPeerRadio;
+
+  @NonNull
   public final Button pairButton;
+
+  @NonNull
+  public final RadioGroup peerTypeGroup;
+
+  @NonNull
+  public final RadioButton phoneCsPeerRadio;
 
   @NonNull
   public final TextView rawDistanceText;
@@ -82,6 +91,18 @@ public final class ActivityMainBinding implements ViewBinding {
 
   @NonNull
   public final Button scanButton;
+
+  @NonNull
+  public final RadioButton secLevel0Radio;
+
+  @NonNull
+  public final RadioButton secLevel1Radio;
+
+  @NonNull
+  public final LinearLayout securityLevelContainer;
+
+  @NonNull
+  public final RadioGroup securityLevelGroup;
 
   @NonNull
   public final TextView selectedDeviceText;
@@ -115,15 +136,18 @@ public final class ActivityMainBinding implements ViewBinding {
       @NonNull TextView connectionStatusText, @NonNull ListView deviceList,
       @NonNull TextView distanceText, @NonNull SwitchCompat gpsSwitch,
       @NonNull SwitchCompat imuSwitch, @NonNull LinearLayout initiatorPanel,
-      @NonNull RadioButton initiatorRadio, @NonNull Button pairButton,
-      @NonNull TextView rawDistanceText, @NonNull TextView recordingText,
-      @NonNull LinearLayout reflectorPanel, @NonNull TextView reflectorPeerText,
-      @NonNull RadioButton reflectorRadio, @NonNull RadioGroup roleGroup,
-      @NonNull TextView rssiText, @NonNull Button scanButton, @NonNull TextView selectedDeviceText,
-      @NonNull Button startCsButton, @NonNull TextView statusText, @NonNull Button stopButton,
-      @NonNull TextView txAppliedText, @NonNull LinearLayout txPowerPanel,
-      @NonNull SeekBar txPowerSlider, @NonNull TextView txRangeText,
-      @NonNull TextView txRequestedText) {
+      @NonNull RadioButton initiatorRadio, @NonNull RadioButton nordicPeerRadio,
+      @NonNull Button pairButton, @NonNull RadioGroup peerTypeGroup,
+      @NonNull RadioButton phoneCsPeerRadio, @NonNull TextView rawDistanceText,
+      @NonNull TextView recordingText, @NonNull LinearLayout reflectorPanel,
+      @NonNull TextView reflectorPeerText, @NonNull RadioButton reflectorRadio,
+      @NonNull RadioGroup roleGroup, @NonNull TextView rssiText, @NonNull Button scanButton,
+      @NonNull RadioButton secLevel0Radio, @NonNull RadioButton secLevel1Radio,
+      @NonNull LinearLayout securityLevelContainer, @NonNull RadioGroup securityLevelGroup,
+      @NonNull TextView selectedDeviceText, @NonNull Button startCsButton,
+      @NonNull TextView statusText, @NonNull Button stopButton, @NonNull TextView txAppliedText,
+      @NonNull LinearLayout txPowerPanel, @NonNull SeekBar txPowerSlider,
+      @NonNull TextView txRangeText, @NonNull TextView txRequestedText) {
     this.rootView = rootView;
     this.advertiseButton = advertiseButton;
     this.applyRoleButton = applyRoleButton;
@@ -135,7 +159,10 @@ public final class ActivityMainBinding implements ViewBinding {
     this.imuSwitch = imuSwitch;
     this.initiatorPanel = initiatorPanel;
     this.initiatorRadio = initiatorRadio;
+    this.nordicPeerRadio = nordicPeerRadio;
     this.pairButton = pairButton;
+    this.peerTypeGroup = peerTypeGroup;
+    this.phoneCsPeerRadio = phoneCsPeerRadio;
     this.rawDistanceText = rawDistanceText;
     this.recordingText = recordingText;
     this.reflectorPanel = reflectorPanel;
@@ -144,6 +171,10 @@ public final class ActivityMainBinding implements ViewBinding {
     this.roleGroup = roleGroup;
     this.rssiText = rssiText;
     this.scanButton = scanButton;
+    this.secLevel0Radio = secLevel0Radio;
+    this.secLevel1Radio = secLevel1Radio;
+    this.securityLevelContainer = securityLevelContainer;
+    this.securityLevelGroup = securityLevelGroup;
     this.selectedDeviceText = selectedDeviceText;
     this.startCsButton = startCsButton;
     this.statusText = statusText;
@@ -242,9 +273,27 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.nordicPeerRadio;
+      RadioButton nordicPeerRadio = ViewBindings.findChildViewById(rootView, id);
+      if (nordicPeerRadio == null) {
+        break missingId;
+      }
+
       id = R.id.pairButton;
       Button pairButton = ViewBindings.findChildViewById(rootView, id);
       if (pairButton == null) {
+        break missingId;
+      }
+
+      id = R.id.peerTypeGroup;
+      RadioGroup peerTypeGroup = ViewBindings.findChildViewById(rootView, id);
+      if (peerTypeGroup == null) {
+        break missingId;
+      }
+
+      id = R.id.phoneCsPeerRadio;
+      RadioButton phoneCsPeerRadio = ViewBindings.findChildViewById(rootView, id);
+      if (phoneCsPeerRadio == null) {
         break missingId;
       }
 
@@ -293,6 +342,30 @@ public final class ActivityMainBinding implements ViewBinding {
       id = R.id.scanButton;
       Button scanButton = ViewBindings.findChildViewById(rootView, id);
       if (scanButton == null) {
+        break missingId;
+      }
+
+      id = R.id.secLevel0Radio;
+      RadioButton secLevel0Radio = ViewBindings.findChildViewById(rootView, id);
+      if (secLevel0Radio == null) {
+        break missingId;
+      }
+
+      id = R.id.secLevel1Radio;
+      RadioButton secLevel1Radio = ViewBindings.findChildViewById(rootView, id);
+      if (secLevel1Radio == null) {
+        break missingId;
+      }
+
+      id = R.id.securityLevelContainer;
+      LinearLayout securityLevelContainer = ViewBindings.findChildViewById(rootView, id);
+      if (securityLevelContainer == null) {
+        break missingId;
+      }
+
+      id = R.id.securityLevelGroup;
+      RadioGroup securityLevelGroup = ViewBindings.findChildViewById(rootView, id);
+      if (securityLevelGroup == null) {
         break missingId;
       }
 
@@ -352,10 +425,11 @@ public final class ActivityMainBinding implements ViewBinding {
 
       return new ActivityMainBinding((ScrollView) rootView, advertiseButton, applyRoleButton,
           capabilityText, connectionStatusText, deviceList, distanceText, gpsSwitch, imuSwitch,
-          initiatorPanel, initiatorRadio, pairButton, rawDistanceText, recordingText,
-          reflectorPanel, reflectorPeerText, reflectorRadio, roleGroup, rssiText, scanButton,
-          selectedDeviceText, startCsButton, statusText, stopButton, txAppliedText, txPowerPanel,
-          txPowerSlider, txRangeText, txRequestedText);
+          initiatorPanel, initiatorRadio, nordicPeerRadio, pairButton, peerTypeGroup,
+          phoneCsPeerRadio, rawDistanceText, recordingText, reflectorPanel, reflectorPeerText,
+          reflectorRadio, roleGroup, rssiText, scanButton, secLevel0Radio, secLevel1Radio,
+          securityLevelContainer, securityLevelGroup, selectedDeviceText, startCsButton, statusText,
+          stopButton, txAppliedText, txPowerPanel, txPowerSlider, txRangeText, txRequestedText);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

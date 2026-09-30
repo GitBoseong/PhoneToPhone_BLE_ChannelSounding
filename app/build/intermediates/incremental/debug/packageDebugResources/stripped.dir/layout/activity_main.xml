@@ -39,6 +39,20 @@
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp" android:layout_marginTop="12dp" android:background="@drawable/panel_background">
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="BLE Control" android:textSize="16sp" android:textColor="#172B3A" android:textStyle="bold" android:layout_marginBottom="8dp"/>
             <LinearLayout android:id="@+id/initiatorPanel" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Target Reflector Type" android:textSize="14sp" android:textColor="#172B3A" android:textStyle="bold" android:layout_marginTop="4dp"/>
+                <RadioGroup android:id="@+id/peerTypeGroup" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+                    <RadioButton android:id="@+id/phoneCsPeerRadio" android:layout_width="wrap_content" android:layout_height="48dp" android:checked="true" android:text="Phone CS"/>
+                    <RadioButton android:id="@+id/nordicPeerRadio" android:layout_width="wrap_content" android:layout_height="48dp" android:layout_marginStart="16dp" android:text="Nordic / HW Reflector"/>
+                </RadioGroup>
+
+                <LinearLayout android:id="@+id/securityLevelContainer" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone">
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="CS Security Level" android:textSize="13sp" android:textColor="#172B3A" android:textStyle="bold"/>
+                    <RadioGroup android:id="@+id/securityLevelGroup" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+                        <RadioButton android:id="@+id/secLevel1Radio" android:layout_width="wrap_content" android:layout_height="48dp" android:checked="true" android:text="Level 1 (Encrypted)"/>
+                        <RadioButton android:id="@+id/secLevel0Radio" android:layout_width="wrap_content" android:layout_height="48dp" android:layout_marginStart="12dp" android:text="Level 0 (Plain)"/>
+                    </RadioGroup>
+                </LinearLayout>
+
                 <Button android:id="@+id/scanButton" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="1. Reflector 검색" android:textAllCaps="false"/>
                 <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Available Reflectors" android:textSize="14sp" android:textColor="#172B3A" android:textStyle="bold"/>
                 <ListView android:id="@+id/deviceList" android:layout_width="match_parent" android:layout_height="180dp" android:choiceMode="singleChoice" android:dividerHeight="1dp"/>

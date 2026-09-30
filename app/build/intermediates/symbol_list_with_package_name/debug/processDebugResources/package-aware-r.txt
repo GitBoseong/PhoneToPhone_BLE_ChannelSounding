@@ -756,6 +756,7 @@ id middle
 id multiply
 id never
 id none
+id nordicPeerRadio
 id normal
 id notification_background
 id notification_main_column
@@ -764,6 +765,8 @@ id off
 id on
 id pairButton
 id parentPanel
+id peerTypeGroup
+id phoneCsPeerRadio
 id progress_circular
 id progress_horizontal
 id radio
@@ -792,6 +795,10 @@ id search_mag_icon
 id search_plate
 id search_src_text
 id search_voice_btn
+id secLevel0Radio
+id secLevel1Radio
+id securityLevelContainer
+id securityLevelGroup
 id select_dialog_listview
 id selectedDeviceText
 id shortcut

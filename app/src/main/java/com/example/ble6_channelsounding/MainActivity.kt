@@ -134,6 +134,15 @@ class MainActivity : AppCompatActivity(),
             recorder.setTx(currentTxState())
             foundDevices[address]?.let(bleCoordinator::selectDevice)
             binding.selectedDeviceText.text = "선택 장치: $address"
+            if (uiRole == UiRole.INITIATOR) {
+                binding.startCsButton.isEnabled = true
+            }
+        }
+
+        binding.peerTypeGroup.setOnCheckedChangeListener { _, _ ->
+            val isNordic = binding.nordicPeerRadio.isChecked
+            binding.securityLevelContainer.visibility = if (isNordic) View.VISIBLE else View.GONE
+            log("Target Reflector 모드: ${if (isNordic) "Nordic / HW Reflector" else "Phone CS"}")
         }
 
         binding.applyRoleButton.setOnClickListener {
@@ -167,14 +176,41 @@ class MainActivity : AppCompatActivity(),
         }
 
         binding.startCsButton.setOnClickListener {
-            if (!controlReady) {
-                log("먼저 연결·페어링·GATT 준비를 완료하세요.")
+            val address = selectedAddress ?: run {
+                log("선택된 장치가 없습니다.")
                 return@setOnClickListener
             }
 
             binding.startCsButton.isEnabled = false
-            startCsvSession(UiRole.INITIATOR, selectedAddress)
-            bleCoordinator.requestStartFromReflector()
+            startCsvSession(UiRole.INITIATOR, address)
+
+            val isHardwareMode = binding.nordicPeerRadio.isChecked || bleCoordinator.isHardwareReflector || !bleCoordinator.hasControlChannel
+            val securityLevel = if (binding.secLevel0Radio.isChecked) 0 else 1
+
+            if (isHardwareMode) {
+                val secName = if (securityLevel == 0) "Level 0" else "Level 1"
+                log("Nordic / HW Reflector CS Initiator 시작 (Security: $secName, GATT 연결 유지): $address")
+
+                if (!bleCoordinator.isGattConnected) {
+                    log("Nordic 보드 GATT 연결 시도...")
+                    bleCoordinator.connectAndPairSelected()
+                }
+
+                csStartHandler.postDelayed({
+                    val controller = csController
+                    if (controller == null) {
+                        log("CS 오류: ChannelSoundingController가 초기화되지 않았습니다.")
+                        finishRecording("CS start cancelled")
+                        restoreStartButton()
+                        return@postDelayed
+                    }
+                    if (Build.VERSION.SDK_INT >= 36) {
+                        controller.startInitiator(address.uppercase(Locale.US), securityLevel)
+                    }
+                }, 300L)
+            } else {
+                bleCoordinator.requestStartFromReflector()
+            }
         }
 
         binding.advertiseButton.setOnClickListener {
@@ -369,14 +405,16 @@ class MainActivity : AppCompatActivity(),
     override fun onControlChannelReady(address: String) {
         runOnUiThread {
             controlReady = true
-            bleState = "Connected / GATT ready"
+            val isHw = bleCoordinator.isHardwareReflector
+            bleState = if (isHw) "Connected / Hardware Reflector" else "Connected / GATT ready"
             updateStatus()
             binding.startCsButton.isEnabled = true
-            binding.selectedDeviceText.text =
-                "페어링 및 제어·거리 채널 준비 완료: $address"
+            val peerType = if (isHw) "하드웨어 Reflector (Nordic 등)" else "페어링 및 제어·거리 채널"
+            binding.selectedDeviceText.text = "$peerType 준비 완료: $address"
         }
 
-        log("GATT 제어 및 거리 채널 준비 완료")
+        val peerTypeLog = if (bleCoordinator.isHardwareReflector) "하드웨어 Reflector" else "Phone CS"
+        log("Reflector 준비 완료 ($peerTypeLog): $address")
     }
 
     override fun onStartReflectorRequested(initiatorAddress: String) {
@@ -548,8 +586,22 @@ class MainActivity : AppCompatActivity(),
     }
 
     override fun onRangingStopped(role: ChannelSoundingController.Role) {
-        log("CS stopped: $role")
-        stopEverything(keepLog = true)
+        log("CS 절차 완료: $role")
+        if (recording && !stopping && selectedAddress != null && uiRole == UiRole.INITIATOR) {
+            log("Nordic CS 15개 절차 완료 → 세션 정리 후 연속 측정 시도...")
+            if (Build.VERSION.SDK_INT >= 36) csController?.stop()
+            csStartHandler.postDelayed({
+                if (recording && !stopping && selectedAddress != null) {
+                    val address = selectedAddress!!
+                    val securityLevel = if (binding.secLevel0Radio.isChecked) 0 else 1
+                    if (Build.VERSION.SDK_INT >= 36) {
+                        csController?.startInitiator(address.uppercase(Locale.US), securityLevel, preserveSampleCount = true)
+                    }
+                }
+            }, 300L)
+        } else {
+            stopEverything(keepLog = true)
+        }
     }
 
     override fun onError(message: String) {
@@ -568,16 +620,37 @@ class MainActivity : AppCompatActivity(),
     }
 
     override fun onClosed(reason: Int) {
-        log("RangingSession closed: reason=$reason")
-        finishRecording("Ranging session closed")
-        csStartHandler.post { stopEverything(keepLog = true) }
+        val reasonText = if (Build.VERSION.SDK_INT >= 36) {
+            ChannelSoundingController.reasonToText(reason)
+        } else {
+            "reason=$reason"
+        }
+        log("RangingSession closed: $reasonText")
+        if (recording && !stopping && selectedAddress != null && uiRole == UiRole.INITIATOR) {
+            log("CS 세션 종료 ($reasonText) → 세션 정리 후 300ms 뒤 연속 측정 시도...")
+            if (Build.VERSION.SDK_INT >= 36) csController?.stop()
+            csStartHandler.postDelayed({
+                if (recording && !stopping && selectedAddress != null) {
+                    val address = selectedAddress!!
+                    val securityLevel = if (binding.secLevel0Radio.isChecked) 0 else 1
+                    if (Build.VERSION.SDK_INT >= 36) {
+                        csController?.startInitiator(address.uppercase(Locale.US), securityLevel, preserveSampleCount = true)
+                    }
+                }
+            }, 300L)
+        } else {
+            finishRecording("Ranging session closed ($reasonText)")
+            csStartHandler.post { stopEverything(keepLog = true) }
+        }
     }
 
     private fun restoreStartButton() {
-        if (uiRole != UiRole.INITIATOR || !controlReady) return
+        if (uiRole != UiRole.INITIATOR) return
 
         runOnUiThread {
-            binding.startCsButton.isEnabled = true
+            if (selectedAddress != null || controlReady) {
+                binding.startCsButton.isEnabled = true
+            }
         }
     }
 

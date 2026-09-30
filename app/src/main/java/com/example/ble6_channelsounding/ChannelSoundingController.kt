@@ -84,15 +84,31 @@ class ChannelSoundingController(
         manager.registerCapabilitiesCallback(context.mainExecutor, callback)
     }
 
-    fun startInitiator(peerAddress: String) {
-        start(Role.INITIATOR, peerAddress)
+    fun startInitiator(
+        peerAddress: String,
+        securityLevel: Int = BleCsRangingCapabilities.CS_SECURITY_LEVEL_ONE,
+        updateRate: Int = RawRangingDevice.UPDATE_RATE_NORMAL,
+        preserveSampleCount: Boolean = false
+    ) {
+        start(Role.INITIATOR, peerAddress, securityLevel, updateRate, preserveSampleCount)
     }
 
-    fun startReflector(peerAddress: String) {
-        start(Role.REFLECTOR, peerAddress)
+    fun startReflector(
+        peerAddress: String,
+        securityLevel: Int = BleCsRangingCapabilities.CS_SECURITY_LEVEL_ONE,
+        updateRate: Int = RawRangingDevice.UPDATE_RATE_NORMAL,
+        preserveSampleCount: Boolean = false
+    ) {
+        start(Role.REFLECTOR, peerAddress, securityLevel, updateRate, preserveSampleCount)
     }
 
-    private fun start(role: Role, peerAddress: String) {
+    private fun start(
+        role: Role,
+        peerAddress: String,
+        securityLevel: Int,
+        updateRate: Int,
+        preserveSampleCount: Boolean
+    ) {
         if (starting || session != null) {
             listener.onError("이미 CS 세션이 시작 중이거나 실행 중입니다.")
             return
@@ -116,8 +132,10 @@ class ChannelSoundingController(
         starting = true
         val token = ++generation
         activeRole = role
-        recentDistances.clear()
-        totalSamples = 0
+        if (!preserveSampleCount) {
+            recentDistances.clear()
+            totalSamples = 0
+        }
 
         val normalizedAddress = peerAddress.uppercase(Locale.US)
 
@@ -126,8 +144,8 @@ class ChannelSoundingController(
             .build()
 
         val csParams = BleCsRangingParams.Builder(normalizedAddress)
-            .setRangingUpdateRate(RawRangingDevice.UPDATE_RATE_NORMAL)
-            .setSecurityLevel(BleCsRangingCapabilities.CS_SECURITY_LEVEL_ONE)
+            .setRangingUpdateRate(updateRate)
+            .setSecurityLevel(securityLevel)
             .setLocationType(BleCsRangingParams.LOCATION_TYPE_INDOOR)
             .build()
 
@@ -170,11 +188,8 @@ class ChannelSoundingController(
                 return@RangingCapabilitiesCallback
             }
 
-            if (!cs.supportedSecurityLevels.contains(
-                    BleCsRangingCapabilities.CS_SECURITY_LEVEL_ONE
-                )
-            ) {
-                fail("CS Security Level 1을 지원하지 않습니다.")
+            if (!cs.supportedSecurityLevels.contains(securityLevel)) {
+                fail("요청한 CS Security Level($securityLevel)을 지원하지 않습니다.")
                 return@RangingCapabilitiesCallback
             }
 
@@ -303,14 +318,16 @@ class ChannelSoundingController(
         totalSamples = 0
     }
 
-    private fun reasonToText(reason: Int): String = when (reason) {
-        RangingSession.Callback.REASON_UNKNOWN -> "UNKNOWN"
-        RangingSession.Callback.REASON_LOCAL_REQUEST -> "LOCAL_REQUEST"
-        RangingSession.Callback.REASON_REMOTE_REQUEST -> "REMOTE_REQUEST"
-        RangingSession.Callback.REASON_UNSUPPORTED -> "UNSUPPORTED"
-        RangingSession.Callback.REASON_SYSTEM_POLICY -> "SYSTEM_POLICY"
-        RangingSession.Callback.REASON_NO_PEERS_FOUND -> "NO_PEERS_FOUND"
-        else -> "UNDEFINED"
+    companion object {
+        fun reasonToText(reason: Int): String = when (reason) {
+            0 -> "UNKNOWN(0 - Nordic 보드 또는 BLE 링크 종료)"
+            1 -> "LOCAL_REQUEST(1 - 앱/시스템 요청 종료)"
+            2 -> "REMOTE_REQUEST(2 - Nordic 보드가 세션 종료)"
+            3 -> "UNSUPPORTED(3 - 지원 안되는 CS 파라미터)"
+            4 -> "SYSTEM_POLICY(4 - 시스템 정책 제한)"
+            5 -> "NO_PEERS_FOUND(5 - 피어 응답 없음)"
+            else -> "UNDEFINED($reason)"
+        }
     }
 
     private fun hasRangingPermission(): Boolean =

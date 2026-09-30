@@ -12,33 +12,33 @@
 9-->INJECTED
 10
 11    <uses-permission
-11-->C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\AndroidManifest.xml:4:5-6:58
+11-->C:\Users\kimbo\NNL\workspace\app-workspace\BLE_CS_PhoneToPhone\app\src\main\AndroidManifest.xml:4:5-6:58
 12        android:name="android.permission.BLUETOOTH_SCAN"
-12-->C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\AndroidManifest.xml:5:9-57
+12-->C:\Users\kimbo\NNL\workspace\app-workspace\BLE_CS_PhoneToPhone\app\src\main\AndroidManifest.xml:5:9-57
 13        android:usesPermissionFlags="neverForLocation" />
-13-->C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\AndroidManifest.xml:6:9-55
+13-->C:\Users\kimbo\NNL\workspace\app-workspace\BLE_CS_PhoneToPhone\app\src\main\AndroidManifest.xml:6:9-55
 14    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
-14-->C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\AndroidManifest.xml:7:5-76
-14-->C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\AndroidManifest.xml:7:22-73
+14-->C:\Users\kimbo\NNL\workspace\app-workspace\BLE_CS_PhoneToPhone\app\src\main\AndroidManifest.xml:7:5-76
+14-->C:\Users\kimbo\NNL\workspace\app-workspace\BLE_CS_PhoneToPhone\app\src\main\AndroidManifest.xml:7:22-73
 15    <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
-15-->C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\AndroidManifest.xml:8:5-78
-15-->C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\AndroidManifest.xml:8:22-75
+15-->C:\Users\kimbo\NNL\workspace\app-workspace\BLE_CS_PhoneToPhone\app\src\main\AndroidManifest.xml:8:5-78
+15-->C:\Users\kimbo\NNL\workspace\app-workspace\BLE_CS_PhoneToPhone\app\src\main\AndroidManifest.xml:8:22-75
 16    <uses-permission android:name="android.permission.RANGING" />
-16-->C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\AndroidManifest.xml:9:5-66
-16-->C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\AndroidManifest.xml:9:22-63
+16-->C:\Users\kimbo\NNL\workspace\app-workspace\BLE_CS_PhoneToPhone\app\src\main\AndroidManifest.xml:9:5-66
+16-->C:\Users\kimbo\NNL\workspace\app-workspace\BLE_CS_PhoneToPhone\app\src\main\AndroidManifest.xml:9:22-63
 17    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-17-->C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\AndroidManifest.xml:11:5-79
-17-->C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\AndroidManifest.xml:11:22-76
+17-->C:\Users\kimbo\NNL\workspace\app-workspace\BLE_CS_PhoneToPhone\app\src\main\AndroidManifest.xml:11:5-79
+17-->C:\Users\kimbo\NNL\workspace\app-workspace\BLE_CS_PhoneToPhone\app\src\main\AndroidManifest.xml:11:22-76
 18    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-18-->C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\AndroidManifest.xml:12:5-81
-18-->C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\AndroidManifest.xml:12:22-78
+18-->C:\Users\kimbo\NNL\workspace\app-workspace\BLE_CS_PhoneToPhone\app\src\main\AndroidManifest.xml:12:5-81
+18-->C:\Users\kimbo\NNL\workspace\app-workspace\BLE_CS_PhoneToPhone\app\src\main\AndroidManifest.xml:12:22-78
 19
 20    <uses-feature
-20-->C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\AndroidManifest.xml:14:5-16:35
+20-->C:\Users\kimbo\NNL\workspace\app-workspace\BLE_CS_PhoneToPhone\app\src\main\AndroidManifest.xml:14:5-16:35
 21        android:name="android.hardware.bluetooth_le"
-21-->C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\AndroidManifest.xml:15:9-53
+21-->C:\Users\kimbo\NNL\workspace\app-workspace\BLE_CS_PhoneToPhone\app\src\main\AndroidManifest.xml:15:9-53
 22        android:required="true" />
-22-->C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\AndroidManifest.xml:16:9-32
+22-->C:\Users\kimbo\NNL\workspace\app-workspace\BLE_CS_PhoneToPhone\app\src\main\AndroidManifest.xml:16:9-32
 23
 24    <permission
 24-->[androidx.core:core:1.16.0] C:\Users\kimbo\.gradle\caches\9.4.1\transforms\33cadbb869d633003a0cf1cc9bbe2435\transformed\core-1.16.0\AndroidManifest.xml:22:5-24:47
@@ -52,36 +52,36 @@
 28-->[androidx.core:core:1.16.0] C:\Users\kimbo\.gradle\caches\9.4.1\transforms\33cadbb869d633003a0cf1cc9bbe2435\transformed\core-1.16.0\AndroidManifest.xml:26:22-94
 29
 30    <application
-30-->C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\AndroidManifest.xml:18:5-32:19
+30-->C:\Users\kimbo\NNL\workspace\app-workspace\BLE_CS_PhoneToPhone\app\src\main\AndroidManifest.xml:18:5-32:19
 31        android:allowBackup="true"
-31-->C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\AndroidManifest.xml:19:9-35
+31-->C:\Users\kimbo\NNL\workspace\app-workspace\BLE_CS_PhoneToPhone\app\src\main\AndroidManifest.xml:19:9-35
 32        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
 32-->[androidx.core:core:1.16.0] C:\Users\kimbo\.gradle\caches\9.4.1\transforms\33cadbb869d633003a0cf1cc9bbe2435\transformed\core-1.16.0\AndroidManifest.xml:28:18-86
 33        android:debuggable="true"
 34        android:extractNativeLibs="false"
 34-->INJECTED
 35        android:label="Phone CS"
-35-->C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\AndroidManifest.xml:20:9-33
+35-->C:\Users\kimbo\NNL\workspace\app-workspace\BLE_CS_PhoneToPhone\app\src\main\AndroidManifest.xml:20:9-33
 36        android:supportsRtl="true"
-36-->C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\AndroidManifest.xml:21:9-35
+36-->C:\Users\kimbo\NNL\workspace\app-workspace\BLE_CS_PhoneToPhone\app\src\main\AndroidManifest.xml:21:9-35
 37        android:testOnly="true"
 38        android:theme="@style/Theme.PhoneCS" >
-38-->C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\AndroidManifest.xml:22:9-45
+38-->C:\Users\kimbo\NNL\workspace\app-workspace\BLE_CS_PhoneToPhone\app\src\main\AndroidManifest.xml:22:9-45
 39        <activity
-39-->C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\AndroidManifest.xml:24:9-31:20
+39-->C:\Users\kimbo\NNL\workspace\app-workspace\BLE_CS_PhoneToPhone\app\src\main\AndroidManifest.xml:24:9-31:20
 40            android:name="com.example.ble6_channelsounding.MainActivity"
-40-->C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\AndroidManifest.xml:25:13-41
+40-->C:\Users\kimbo\NNL\workspace\app-workspace\BLE_CS_PhoneToPhone\app\src\main\AndroidManifest.xml:25:13-41
 41            android:exported="true" >
-41-->C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\AndroidManifest.xml:26:13-36
+41-->C:\Users\kimbo\NNL\workspace\app-workspace\BLE_CS_PhoneToPhone\app\src\main\AndroidManifest.xml:26:13-36
 42            <intent-filter>
-42-->C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\AndroidManifest.xml:27:13-30:29
+42-->C:\Users\kimbo\NNL\workspace\app-workspace\BLE_CS_PhoneToPhone\app\src\main\AndroidManifest.xml:27:13-30:29
 43                <action android:name="android.intent.action.MAIN" />
-43-->C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\AndroidManifest.xml:28:17-69
-43-->C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\AndroidManifest.xml:28:25-66
+43-->C:\Users\kimbo\NNL\workspace\app-workspace\BLE_CS_PhoneToPhone\app\src\main\AndroidManifest.xml:28:17-69
+43-->C:\Users\kimbo\NNL\workspace\app-workspace\BLE_CS_PhoneToPhone\app\src\main\AndroidManifest.xml:28:25-66
 44
 45                <category android:name="android.intent.category.LAUNCHER" />
-45-->C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\AndroidManifest.xml:29:17-77
-45-->C:\Users\kimbo\NNL\workspace\app-workspace\PhoneToPhoneChannelSounding\app\src\main\AndroidManifest.xml:29:27-74
+45-->C:\Users\kimbo\NNL\workspace\app-workspace\BLE_CS_PhoneToPhone\app\src\main\AndroidManifest.xml:29:17-77
+45-->C:\Users\kimbo\NNL\workspace\app-workspace\BLE_CS_PhoneToPhone\app\src\main\AndroidManifest.xml:29:27-74
 46            </intent-filter>
 47        </activity>
 48
