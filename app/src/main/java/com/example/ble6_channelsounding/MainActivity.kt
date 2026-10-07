@@ -67,6 +67,23 @@ class MainActivity : AppCompatActivity(),
     private lateinit var deviceAdapter: ArrayAdapter<String>
 
     private var selectedAddress: String? = null
+    private var connectionRssi: Int? = null
+    private var rangingRssi: Int? = null
+
+    private fun updateRssiUi() {
+        binding.rssiText.text = "Connection RSSI: ${connectionRssi?.let { "$it dBm" } ?: "-"} / Ranging RSSI: ${rangingRssi?.let { "$it dBm" } ?: "-"}"
+    }
+
+    override fun onConnectionRssi(address: String, rssi: Int?, timestamp: Long) {
+        runOnUiThread {
+            connectionRssi = rssi
+            if (rssi != null) {
+                recorder.connectionRssi(ConnectionRssiSample(rssi, timestamp))
+                log("Connection RSSI=$rssi dBm peer=$address", "BLE")
+            }
+            updateRssiUi()
+        }
+    }
     private var controlReady = false
 
     /* Reflector가 완전히 준비된 뒤 Initiator를 약간 늦게 시작하여 역할 반전 안정성 향상 */
@@ -356,7 +373,7 @@ class MainActivity : AppCompatActivity(),
             if (selectedAddress == address) {
                 recorder.setTx(currentTxState())
                 recorder.scan(sample)
-                binding.rssiText.text = "BLE RSSI: $rssi dBm / Ranging RSSI: -"
+                updateRssiUi()
             }
         }
     }
@@ -559,7 +576,7 @@ class MainActivity : AppCompatActivity(),
         recorder.distance(DistanceSample(rawMeters, smoothedMeters, sampleCount,
             timestampEpochMs, rssi, "LOCAL_RANGING"))
         log("RANGING RSSI=${rssi?.let { "$it dBm" } ?: "N/A"} distance=$rawMeters smoothed=$smoothedMeters samples=$sampleCount", "CS")
-        binding.rssiText.text = "BLE RSSI: ${scanSamples[selectedAddress]?.rssi?.let { "$it dBm" } ?: "-"} / Ranging RSSI: ${rssi?.let { "$it dBm" } ?: "N/A"}"
+        runOnUiThread { rangingRssi = rssi; updateRssiUi() }
 
         runOnUiThread {
             binding.distanceText.text = String.format(

@@ -9,7 +9,7 @@ class MeasurementDataTest {
             TxPowerState(), null, ImuSnapshot(), "SAMPLE", 123L)
         assertEquals(MeasurementCsv.header.size, row.size)
         val fields = MeasurementCsv.header.zip(row).toMap()
-        listOf("distance_raw_m", "ranging_rssi_dbm", "gps_latitude", "acc_x", "game_rv_w", "pressure_hpa", "tx_power_requested_dbm")
+        listOf("connection_rssi_dbm", "connection_rssi_timestamp_epoch_ms", "distance_raw_m", "ranging_rssi_dbm", "gps_latitude", "acc_x", "game_rv_w", "pressure_hpa", "tx_power_requested_dbm")
             .forEach { assertNull(fields[it]) }
         assertFalse(MeasurementCsv.line(row).contains("null"))
         assertTrue(fields["timestamp_iso8601"].toString().matches(Regex(".*(Z|[+-]\\d{2}:\\d{2})$")))
@@ -43,6 +43,27 @@ class MeasurementDataTest {
     @Test fun csvEscapesQuotesCommasAndNewlinesAndRejectsNonFiniteValues() {
         assertEquals("\"a,b\",\"say \"\"yes\"\"\",\"line\nnext\",,,,0", MeasurementCsv.line(
             listOf("a,b", "say \"yes\"", "line\nnext", null, Double.NaN, Float.POSITIVE_INFINITY, 0)))
+    }
+
+    @Test fun connectionRssiStaysSeparateFromScanAndRangingAndIsConsumedOnce() {
+        val pending = PendingMeasurements()
+        pending.connections.addLast(ConnectionRssiSample(-61, 1100))
+        assertTrue(pending.hasPending())
+        val row = MeasurementCsv.row(1200, 20.0, "INITIATOR", "AA",
+            DistanceSample(1.2, 1.1, 3, 1000, -58, "LOCAL_RANGING"), ScanSample(-54, 900),
+            TxPowerState(), null, ImuSnapshot(), "SAMPLE", 123,
+            pending.connections.removeFirstOrNull())
+        assertEquals(MeasurementCsv.header.size, row.size)
+        val fields = MeasurementCsv.header.zip(row).toMap()
+        assertEquals(-61, fields["connection_rssi_dbm"])
+        assertEquals(1100L, fields["connection_rssi_timestamp_epoch_ms"])
+        assertEquals(-54, fields["rssi_dbm"])
+        assertEquals(-58, fields["ranging_rssi_dbm"])
+        assertNull(pending.connections.removeFirstOrNull())
+        assertFalse(pending.hasPending())
+        pending.connections.addLast(ConnectionRssiSample(-62, 1300))
+        pending.clear()
+        assertFalse(pending.hasPending())
     }
 
     @Test fun existingDistancePacketRemainsCompatible() {

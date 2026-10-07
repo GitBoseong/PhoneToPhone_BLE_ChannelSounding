@@ -95,6 +95,9 @@ class MeasurementRecorder(context: Context, private val status: (String) -> Unit
     fun distance(sample: DistanceSample) = submit {
         if (active) pending.distances.addLast(sample)
     }
+    fun connectionRssi(sample: ConnectionRssiSample) = submit {
+        if (active) pending.connections.addLast(sample)
+    }
     fun scan(sample: ScanSample) = submit {
         if (active) pending.scans.addLast(sample)
     }
@@ -105,7 +108,7 @@ class MeasurementRecorder(context: Context, private val status: (String) -> Unit
         val now = System.currentTimeMillis()
         val fields = MeasurementCsv.row(now, (nanos - startNanos) / 1_000_000.0, role, peer,
             pending.distances.removeFirstOrNull(), pending.scans.removeFirstOrNull(), tx, gps.poll(),
-            if (imuEnabled && kind == "SAMPLE") sensors.snapshot() else ImuSnapshot(), kind, nanos)
+            if (imuEnabled && kind == "SAMPLE") sensors.snapshot() else ImuSnapshot(), kind, nanos, pending.connections.removeFirstOrNull())
         logger.data(fields)
         if (kind == "SAMPLE") {
             if (sampleCount == 0L) firstNanos = nanos

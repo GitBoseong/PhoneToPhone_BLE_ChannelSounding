@@ -192,3 +192,11 @@ Reflector에서 중지 → TX 선택 → 광고, Initiator에서 재검색/연�
 RawInitiator/RawResponder 설정, indoor location type, 1,000 measurement limit, 최대 5개 단순 이동평균은 유지했습니다.
 수집 resource 종료와 늦은 callback 차단만 보강했습니다. PBR/RTT 내부 계산이나 CS RF 송신 전력을 임의로 조작하지 않습니다.
 
+## Connection RSSI 수집
+
+- 기존 `clientGatt.readRemoteRssi()`로 연결된 스마트폰 또는 BLE 보드의 RSSI를 약 1초마다 요청하며, RSSI용 GATT 연결은 추가하지 않습니다.
+- 기존 `BluetoothGattCallback.onReadRemoteRssi()`에서 `GATT_SUCCESS` 결과만 전달하고 연결 종료 시 수집을 중단합니다.
+- 페어링, 서비스 탐색, GATT 쓰기 중에는 RSSI 요청을 건너뛰어 기존 CS 측정 및 제어 동작의 간섭을 줄입니다.
+- 화면의 `Connection RSSI`와 CS의 `Ranging RSSI`를 구분합니다. 광고 RSSI 기록도 유지합니다.
+- DATA CSV 끝에 `connection_rssi_dbm`, `connection_rssi_timestamp_epoch_ms` 열을 추가하고 수신 이벤트를 한 번씩 기록합니다.
+- 검증: `:app:testDebugUnitTest` (8개 통과), `:app:assembleDebug` 성공. 폰–폰 및 폰–보드 RSSI 수신 확인.

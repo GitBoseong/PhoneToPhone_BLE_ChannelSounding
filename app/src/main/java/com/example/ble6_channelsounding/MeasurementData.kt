@@ -16,6 +16,7 @@ data class DistanceSample(
     val timestamp: Long, val rssi: Int?, val source: String
 )
 
+data class ConnectionRssiSample(val rssi: Int, val timestamp: Long)
 data class ScanSample(val rssi: Int, val timestamp: Long)
 data class GpsFix(val latitude: Double, val longitude: Double, val timestamp: Long)
 data class SensorValue(val values: List<Float>, val timestamp: Long)
@@ -29,8 +30,9 @@ data class ImuSnapshot(
 class PendingMeasurements {
     val distances = ArrayDeque<DistanceSample>()
     val scans = ArrayDeque<ScanSample>()
-    fun clear() { distances.clear(); scans.clear() }
-    fun hasPending() = distances.isNotEmpty() || scans.isNotEmpty()
+    val connections = ArrayDeque<ConnectionRssiSample>()
+    fun clear() { distances.clear(); scans.clear(); connections.clear() }
+    fun hasPending() = distances.isNotEmpty() || scans.isNotEmpty() || connections.isNotEmpty()
 }
 
 object MeasurementCsv {
@@ -43,7 +45,8 @@ object MeasurementCsv {
         "mag_x", "mag_y", "mag_z", "game_rv_x", "game_rv_y", "game_rv_z", "game_rv_w", "pressure_hpa",
         "acc_timestamp_epoch_ms", "gyro_timestamp_epoch_ms", "mag_timestamp_epoch_ms",
         "game_rv_timestamp_epoch_ms", "pressure_timestamp_epoch_ms", "rssi_timestamp_epoch_ms",
-        "distance_source", "row_kind", "record_elapsed_realtime_ns"
+        "distance_source", "row_kind", "record_elapsed_realtime_ns",
+        "connection_rssi_dbm", "connection_rssi_timestamp_epoch_ms"
     )
     private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
     fun iso(epoch: Long): String = formatter.format(Instant.ofEpochMilli(epoch).atZone(ZoneId.systemDefault()))
@@ -60,7 +63,7 @@ object MeasurementCsv {
 
     fun row(now: Long, elapsedMs: Double, role: String, peer: String?, distance: DistanceSample?,
             scan: ScanSample?, tx: TxPowerState, gps: GpsFix?, imu: ImuSnapshot,
-            kind: String, elapsedNanos: Long): List<Any?> = buildList {
+            kind: String, elapsedNanos: Long, connection: ConnectionRssiSample? = null): List<Any?> = buildList {
         addAll(listOf(iso(now), now, elapsedMs, role, peer,
             distance?.raw, distance?.smoothed, distance?.count, distance?.timestamp,
             scan?.rssi, distance?.rssi, tx.mode, tx.requested, tx.applied, tx.advertised,
@@ -70,7 +73,7 @@ object MeasurementCsv {
         }
         addAll(listOf(imu.acc?.timestamp, imu.gyro?.timestamp, imu.mag?.timestamp,
             imu.rotation?.timestamp, imu.pressure?.timestamp, scan?.timestamp,
-            distance?.source, kind, elapsedNanos))
+            distance?.source, kind, elapsedNanos, connection?.rssi, connection?.timestamp))
     }
 }
 

@@ -63,6 +63,8 @@ class BlePeerCoordinator(
             sampleCount: Int
         )
 
+        fun onConnectionRssi(address: String, rssi: Int?, timestamp: Long)
+
         fun onDisconnected()
     }
 
@@ -92,6 +94,40 @@ class BlePeerCoordinator(
 
     /* Initiator 쪽 GATT client */
     private var clientGatt: BluetoothGatt? = null
+    private var rssiGatt: BluetoothGatt? = null
+    private var rssiRequestPending = false
+    private val rssiPoll = object : Runnable {
+        @SuppressLint("MissingPermission")
+        override fun run() {
+            val gatt = rssiGatt ?: return
+            if (clientGatt !== gatt) return
+            // Do not compete with pairing, discovery, or queued control/distance writes.
+            val writing = synchronized(writeLock) { currentWrite != null || writeQueue.isNotEmpty() }
+            if (!rssiRequestPending && !serviceDiscoveryRequested &&
+                pendingDiscoveryRunnable == null && !writing &&
+                gatt.device.bondState != BluetoothDevice.BOND_BONDING && hasBlePermissions()) {
+                rssiRequestPending = try { gatt.readRemoteRssi() } catch (_: Exception) { false }
+            }
+            mainHandler.postDelayed(this, 1000L)
+        }
+    }
+
+    private fun startConnectionRssi(gatt: BluetoothGatt) {
+        mainHandler.post {
+            if (clientGatt !== gatt) return@post
+            stopConnectionRssi()
+            rssiGatt = gatt
+            mainHandler.postDelayed(rssiPoll, 1000L)
+        }
+    }
+
+    private fun stopConnectionRssi() {
+        mainHandler.removeCallbacks(rssiPoll)
+        val old = rssiGatt
+        rssiGatt = null
+        rssiRequestPending = false
+        old?.let { listener.onConnectionRssi(it.device.address, null, System.currentTimeMillis()) }
+    }
     private var controlCharacteristic: BluetoothGattCharacteristic? = null
     private var statusCharacteristic: BluetoothGattCharacteristic? = null
     private var distanceCharacteristic: BluetoothGattCharacteristic? = null
@@ -478,6 +514,7 @@ class BlePeerCoordinator(
 
     @SuppressLint("MissingPermission")
     private fun closeClientGatt() {
+        stopConnectionRssi()
         cancelPendingDiscovery()
         clearWriteQueue()
 
@@ -507,6 +544,7 @@ class BlePeerCoordinator(
         clearWriteQueue()
 
         if (clientGatt === gatt) {
+            stopConnectionRssi()
             isHardwareReflector = false
             clientGatt = null
             controlCharacteristic = null
@@ -714,6 +752,17 @@ class BlePeerCoordinator(
     }
 
     private val clientGattCallback = object : BluetoothGattCallback() {
+        override fun onReadRemoteRssi(gatt: BluetoothGatt, rssi: Int, status: Int) {
+            val timestamp = System.currentTimeMillis()
+            mainHandler.post {
+                if (clientGatt !== gatt || rssiGatt !== gatt) return@post
+                rssiRequestPending = false
+                if (status == BluetoothGatt.GATT_SUCCESS) {
+                    listener.onConnectionRssi(gatt.device.address, rssi, timestamp)
+                }
+            }
+        }
+
         @SuppressLint("MissingPermission")
         override fun onConnectionStateChange(
             gatt: BluetoothGatt,
@@ -735,6 +784,7 @@ class BlePeerCoordinator(
 
                     listener.onSelectedPeerConnected(gatt.device.address)
                     listener.onLog("GATT 연결 성공")
+                    startConnectionRssi(gatt)
 
                     when (gatt.device.bondState) {
                         BluetoothDevice.BOND_BONDED -> {
