@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.CancellationSignal
+import android.util.Log
 import android.ranging.RangingData
 import android.ranging.RangingDevice
 import android.ranging.RangingManager
@@ -49,6 +50,8 @@ class ChannelSoundingController(
     private var activeRole: Role? = null
     private var starting = false
     private var generation = 0L
+    private val lifecycle = CsSessionLifecycle()
+    val isClosing: Boolean get() = lifecycle.closing
 
     private val recentDistances = ArrayDeque<Double>()
     private var totalSamples = 0
@@ -67,6 +70,7 @@ class ChannelSoundingController(
         unregisterCapabilityCallback()
 
         val callback = RangingManager.RangingCapabilitiesCallback { capabilities ->
+            diagnostic("capabilities availability=${capabilities.technologyAvailability} cs=${capabilities.csCapabilities}")
             val cs = capabilities.csCapabilities
             val supported = cs != null
 
@@ -109,8 +113,11 @@ class ChannelSoundingController(
         updateRate: Int,
         preserveSampleCount: Boolean
     ) {
+        diagnostic("startRequested role=$role peer=$peerAddress security=$securityLevel updateRate=$updateRate " +
+            "starting=$starting hasSession=${session != null}")
         if (starting || session != null) {
-            listener.onError("이미 CS 세션이 시작 중이거나 실행 중입니다.")
+            // Manual restart: wait for the old session's actual onClosed callback.
+            stop { start(role, peerAddress, securityLevel, updateRate, preserveSampleCount) }
             return
         }
 
@@ -165,7 +172,7 @@ class ChannelSoundingController(
         }
 
         val sessionConfig = SessionConfig.Builder()
-            .setRangingMeasurementsLimit(1000)
+            .setRangingMeasurementsLimit(0)
             .build()
 
         val deviceRole = when (role) {
@@ -180,6 +187,8 @@ class ChannelSoundingController(
         unregisterCapabilityCallback()
 
         val callback = RangingManager.RangingCapabilitiesCallback { capabilities ->
+            diagnostic("startCapabilities token=$token availability=${capabilities.technologyAvailability} " +
+                "cs=${capabilities.csCapabilities}")
             if (generation != token) return@RangingCapabilitiesCallback
             val cs = capabilities.csCapabilities
 
@@ -194,6 +203,7 @@ class ChannelSoundingController(
             }
 
             try {
+                diagnostic("createRangingSession token=$token peer=$normalizedAddress preference=$preference")
                 val newSession = manager.createRangingSession(
                     context.mainExecutor,
                     sessionCallback(token)
@@ -209,9 +219,11 @@ class ChannelSoundingController(
                  * RangingPreference에 포함된 raw config로 바로 시작합니다.
                  */
                 sessionCancellation = newSession.start(preference)
+                diagnostic("sessionStartReturned token=$token")
 
                 unregisterCapabilityCallback()
             } catch (e: Exception) {
+                Log.e("PhoneCS.CS", "sessionStartException token=$token role=$role peer=$normalizedAddress", e)
                 fail(
                     "CS 세션 시작 실패: " +
                             "${e.javaClass.simpleName}: ${e.message ?: "원인 정보 없음"}"
@@ -225,27 +237,35 @@ class ChannelSoundingController(
 
     private fun sessionCallback(token: Long) = object : RangingSession.Callback {
         override fun onOpened() {
+            diagnostic("onOpened token=$token")
             if (generation != token) return
             starting = false
+            lifecycle.open = true
+            if (lifecycle.closing) {
+                session?.close()
+                return
+            }
             activeRole?.let(listener::onSessionOpened)
         }
 
         override fun onOpenFailed(reason: Int) {
+            diagnostic("onOpenFailed token=$token reason=$reason name=${reasonToText(reason)}")
             if (generation != token) return
-            starting = false
-            fail(
-                "RangingSession open 실패: " +
-                        "${reasonToText(reason)}(reason=$reason)"
-            )
+            val restart = lifecycle.finish()
+            cleanup()
+            if (restart != null) restart()
+            else listener.onError("RangingSession open 실패: ${reasonToText(reason)}(reason=$reason)")
         }
 
         override fun onStarted(peer: RangingDevice, technology: Int) {
-            if (generation != token) return
+            diagnostic("onStarted token=$token peer=$peer technology=$technology")
+            if (generation != token || lifecycle.closing) return
             activeRole?.let(listener::onRangingStarted)
         }
 
         override fun onResults(peer: RangingDevice, data: RangingData) {
-            if (generation != token) return
+            diagnostic("onResults token=$token peer=$peer data=$data")
+            if (generation != token || lifecycle.closing) return
             /* Android 공개 API의 BLE CS 거리 결과는 Initiator에서 처리합니다. */
             if (activeRole != Role.INITIATOR) return
 
@@ -261,41 +281,55 @@ class ChannelSoundingController(
             val smoothed = recentDistances.average()
             // API 36 getTimestampMillis() is annotated @CurrentTimeMillisLong (Unix epoch).
             listener.onDistance(raw, smoothed, totalSamples,
-                if (data.hasRssi()) data.rssi else null, data.timestampMillis)
+                if (data.hasRssi() && data.rssi != 127) data.rssi else null, data.timestampMillis)
         }
 
         override fun onStopped(peer: RangingDevice, technology: Int) {
+            diagnostic("onStopped token=$token peer=$peer technology=$technology requestedClose=${lifecycle.closing}")
             if (generation != token) return
-            activeRole?.let(listener::onRangingStopped)
+            val requestedClose = lifecycle.stopped()
+            recentDistances.clear()
+            if (requestedClose) session?.close()
+            else activeRole?.let(listener::onRangingStopped)
         }
 
         override fun onClosed(reason: Int) {
+            diagnostic("onClosed token=$token reason=$reason name=${reasonToText(reason)} requestedClose=${lifecycle.closing}")
             if (generation != token) return
+            val restart = lifecycle.finish()
             cleanup()
-            listener.onClosed(reason)
+            if (restart != null) restart() else listener.onClosed(reason)
         }
+
     }
 
-    fun stop() {
-        generation++ // Ignore late callbacks from a stopped session after a role change/restart.
-        starting = false
-
-        try {
-            session?.stop()
-        } catch (_: Exception) {
+    fun stop(onClosed: (() -> Unit)? = null) {
+        diagnostic("stopRequested hasSession=${session != null} closing=${lifecycle.closing}")
+        val current = session
+        if (current == null) {
+            // Cancel a capability request before it can create a session.
+            generation++
+            cleanup()
+            onClosed?.invoke()
+            return
         }
-
+        val action = lifecycle.requestClose(onClosed)
+        if (action == CsSessionLifecycle.CloseAction.NONE) return
         try {
-            session?.close()
-        } catch (_: Exception) {
+            if (action == CsSessionLifecycle.CloseAction.STOP) current.stop() else current.close()
+        } catch (e: Exception) {
+            Log.e("PhoneCS.CS", "sessionStopException generation=$generation", e)
+            // Keep the handle: teardown is unconfirmed and a replacement must not start.
+            lifecycle.restart = null
+            lifecycle.closing = false
+            listener.onError("CS 세션 종료 요청 실패: ${e.message}")
         }
-
-        cleanup()
     }
 
     private fun fail(message: String) {
-        listener.onError(message)
+        diagnostic("failure message=$message")
         stop()
+        listener.onError(message)
     }
 
     private fun unregisterCapabilityCallback() {
@@ -310,24 +344,31 @@ class ChannelSoundingController(
     }
 
     private fun cleanup() {
+        generation++ // Ignore callbacks from a session after its actual terminal event.
+        starting = false
+        lifecycle.reset()
         unregisterCapabilityCallback()
         sessionCancellation = null
         session = null
         activeRole = null
         recentDistances.clear()
-        totalSamples = 0
+        // Keep totalSamples for preserveSampleCount; start(preserve=false) resets it.
     }
 
     companion object {
         fun reasonToText(reason: Int): String = when (reason) {
-            0 -> "UNKNOWN(0 - Nordic 보드 또는 BLE 링크 종료)"
-            1 -> "LOCAL_REQUEST(1 - 앱/시스템 요청 종료)"
-            2 -> "REMOTE_REQUEST(2 - Nordic 보드가 세션 종료)"
-            3 -> "UNSUPPORTED(3 - 지원 안되는 CS 파라미터)"
-            4 -> "SYSTEM_POLICY(4 - 시스템 정책 제한)"
-            5 -> "NO_PEERS_FOUND(5 - 피어 응답 없음)"
+            RangingSession.Callback.REASON_UNKNOWN -> "UNKNOWN(0)"
+            RangingSession.Callback.REASON_LOCAL_REQUEST -> "LOCAL_REQUEST(1)"
+            RangingSession.Callback.REASON_REMOTE_REQUEST -> "REMOTE_REQUEST(2)"
+            RangingSession.Callback.REASON_UNSUPPORTED -> "UNSUPPORTED(3)"
+            RangingSession.Callback.REASON_SYSTEM_POLICY -> "SYSTEM_POLICY(4)"
+            RangingSession.Callback.REASON_NO_PEERS_FOUND -> "NO_PEERS_FOUND(5)"
             else -> "UNDEFINED($reason)"
         }
+    }
+
+    private fun diagnostic(message: String) {
+        Log.i("PhoneCS.CS", "generation=$generation role=$activeRole $message")
     }
 
     private fun hasRangingPermission(): Boolean =

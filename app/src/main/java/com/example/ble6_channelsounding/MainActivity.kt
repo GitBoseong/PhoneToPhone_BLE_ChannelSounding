@@ -8,12 +8,13 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.SeekBar
-import android.text.method.ScrollingMovementMethod
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
@@ -41,6 +42,7 @@ class MainActivity : AppCompatActivity(),
     private var bleState = "Disconnected"
     private var csState = "Idle"
     private var stopping = false
+    private var transportStopped = true
 
     companion object {
         private const val DEFAULT_IMU_ENABLED = true
@@ -67,15 +69,25 @@ class MainActivity : AppCompatActivity(),
     private lateinit var deviceAdapter: ArrayAdapter<String>
 
     private var selectedAddress: String? = null
+    override fun onBlePhy(state: BlePhyState) {
+        runOnUiThread {
+            if (transportStopped && state.actual != null) return@runOnUiThread
+            recorder.setPhy(state)
+            binding.phyStatusText.text = "실제 PHY: TX=${state.tx ?: "-"} / RX=${state.rx ?: "-"}"
+            binding.phySelectButton.text = "BLE PHY 선택 · 요청: ${state.requested ?: "Default"}"
+        }
+    }
+
     private var connectionRssi: Int? = null
-    private var rangingRssi: Int? = null
 
     private fun updateRssiUi() {
-        binding.rssiText.text = "Connection RSSI: ${connectionRssi?.let { "$it dBm" } ?: "-"} / Ranging RSSI: ${rangingRssi?.let { "$it dBm" } ?: "-"}"
+        binding.rssiText.text = "Connection RSSI: ${connectionRssi?.let { "$it dBm" } ?: "-"}"
+        binding.rssiColorBar.setRssi(connectionRssi)
     }
 
     override fun onConnectionRssi(address: String, rssi: Int?, timestamp: Long) {
         runOnUiThread {
+            if (transportStopped && rssi != null) return@runOnUiThread
             connectionRssi = rssi
             if (rssi != null) {
                 recorder.connectionRssi(ConnectionRssiSample(rssi, timestamp))
@@ -88,8 +100,54 @@ class MainActivity : AppCompatActivity(),
 
     /* Reflector가 완전히 준비된 뒤 Initiator를 약간 늦게 시작하여 역할 반전 안정성 향상 */
     private val csStartHandler = Handler(Looper.getMainLooper())
+    private var measurementPhase = "IDLE"
+    private var sessionResultCount = 0
+    private var reflectorCsActive = false
+    private var measurementPeer: String? = null
+    private var measurementHardware = false
+    private var measurementSecurity = 1
+
+    private fun hasActiveMeasurement() = recording && !stopping && uiRole == UiRole.INITIATOR &&
+        measurementPeer != null && selectedAddress == measurementPeer
+
+    private fun startMeasurementAttempt() {
+        if (!hasActiveMeasurement()) return
+        binding.startCsButton.isEnabled = false
+        if (!bleConnected || !controlReady) {
+            measurementPhase = "CONNECTING"
+            csState = "Waiting for GATT ready"
+            bleCoordinator.connectAndPairSelected()
+            updateStatus()
+            return
+        }
+        val controller = csController
+        if (controller == null || Build.VERSION.SDK_INT < 36) {
+            onError("CS controller unavailable")
+            return
+        }
+        sessionResultCount = 0
+        if (measurementHardware) {
+            measurementPhase = "STARTING"
+            csState = "Starting CS"
+            controller.startInitiator(measurementPeer!!.uppercase(Locale.US), measurementSecurity)
+        } else {
+            measurementPhase = "READY_WAIT"
+            csState = "Waiting for Reflector READY"
+            bleCoordinator.requestStartFromReflector()
+        }
+        updateStatus()
+    }
 
     private val logLines = ArrayDeque<String>()
+    private val logRenderHandler = Handler(Looper.getMainLooper())
+    private var logRenderPending = false
+    private val renderLog = Runnable {
+        logRenderPending = false
+        if (!isDestroyed && ::binding.isInitialized) {
+            binding.statusText.text = logLines.joinToString("\n")
+            binding.latestLogText.text = "최신 로그: ${logLines.firstOrNull() ?: "-"}"
+        }
+    }
 
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -117,7 +175,8 @@ class MainActivity : AppCompatActivity(),
         }
         binding.imuSwitch.isChecked = DEFAULT_IMU_ENABLED
         binding.gpsSwitch.isChecked = DEFAULT_GPS_ENABLED
-        binding.statusText.movementMethod = ScrollingMovementMethod()
+        log("DEVICE model=${Build.MODEL} sdk=${Build.VERSION.SDK_INT} release=${Build.VERSION.RELEASE} " +
+            "securityPatch=${Build.VERSION.SECURITY_PATCH} fingerprint=${Build.FINGERPRINT}", "APP")
 
         if (Build.VERSION.SDK_INT < 36) {
             binding.capabilityText.text = "Android 16 / API 36 이상 필요"
@@ -132,6 +191,16 @@ class MainActivity : AppCompatActivity(),
             } },
             gpsUnavailable = { runOnUiThread { binding.gpsSwitch.isChecked = false } })
         setupSensorsAndPower()
+        binding.phySelectButton.setOnClickListener {
+            val choices = BlePhyChoice.entries
+            AlertDialog.Builder(this)
+                .setTitle("BLE 연결 PHY 선택")
+                .setItems(choices.map { it.label }.toTypedArray()) { _, index ->
+                    bleCoordinator.selectPhy(choices[index])
+                }
+                .setNegativeButton("취소", null)
+                .show()
+        }
         bleCoordinator = BlePeerCoordinator(this, this)
         bleCoordinator.register()
 
@@ -167,6 +236,7 @@ class MainActivity : AppCompatActivity(),
         }
 
         binding.scanButton.setOnClickListener {
+            transportStopped = false
             foundDevices.clear()
             scanSamples.clear()
             scanPowers.clear()
@@ -185,6 +255,7 @@ class MainActivity : AppCompatActivity(),
         }
 
         binding.pairButton.setOnClickListener {
+            transportStopped = false
             controlReady = false
             binding.startCsButton.isEnabled = false
             bleState = "Connecting / Pairing"
@@ -193,6 +264,7 @@ class MainActivity : AppCompatActivity(),
         }
 
         binding.startCsButton.setOnClickListener {
+            transportStopped = false
             val address = selectedAddress ?: run {
                 log("선택된 장치가 없습니다.")
                 return@setOnClickListener
@@ -201,36 +273,15 @@ class MainActivity : AppCompatActivity(),
             binding.startCsButton.isEnabled = false
             startCsvSession(UiRole.INITIATOR, address)
 
-            val isHardwareMode = binding.nordicPeerRadio.isChecked || bleCoordinator.isHardwareReflector || !bleCoordinator.hasControlChannel
-            val securityLevel = if (binding.secLevel0Radio.isChecked) 0 else 1
-
-            if (isHardwareMode) {
-                val secName = if (securityLevel == 0) "Level 0" else "Level 1"
-                log("Nordic / HW Reflector CS Initiator 시작 (Security: $secName, GATT 연결 유지): $address")
-
-                if (!bleCoordinator.isGattConnected) {
-                    log("Nordic 보드 GATT 연결 시도...")
-                    bleCoordinator.connectAndPairSelected()
-                }
-
-                csStartHandler.postDelayed({
-                    val controller = csController
-                    if (controller == null) {
-                        log("CS 오류: ChannelSoundingController가 초기화되지 않았습니다.")
-                        finishRecording("CS start cancelled")
-                        restoreStartButton()
-                        return@postDelayed
-                    }
-                    if (Build.VERSION.SDK_INT >= 36) {
-                        controller.startInitiator(address.uppercase(Locale.US), securityLevel)
-                    }
-                }, 300L)
-            } else {
-                bleCoordinator.requestStartFromReflector()
-            }
+            measurementPeer = address
+            measurementHardware = binding.nordicPeerRadio.isChecked || bleCoordinator.isHardwareReflector
+            measurementSecurity = if (binding.secLevel0Radio.isChecked) 0 else 1
+            measurementPhase = "IDLE"
+            startMeasurementAttempt()
         }
 
         binding.advertiseButton.setOnClickListener {
+            transportStopped = false
             bleCoordinator.startReflectorAdvertising(requestedTxPower)
         }
 
@@ -316,6 +367,12 @@ class MainActivity : AppCompatActivity(),
     private fun stopEverything(keepLog: Boolean = false) {
         if (stopping) return
         stopping = true
+        transportStopped = true
+        connectionRssi = null
+        updateRssiUi()
+        measurementPhase = "IDLE"
+        measurementPeer = null
+        reflectorCsActive = false
         if (!keepLog) {
             log("전체 세션 중지", "APP")
         }
@@ -351,6 +408,8 @@ class MainActivity : AppCompatActivity(),
         }
 
         if (::recorder.isInitialized) recorder.destroy()
+        logRenderHandler.removeCallbacks(renderLog)
+        logRenderPending = false
         super.onDestroy()
     }
 
@@ -361,6 +420,7 @@ class MainActivity : AppCompatActivity(),
     @SuppressLint("MissingPermission")
     override fun onScanDevice(device: BluetoothDevice, name: String, rssi: Int, txPower: Int?, timestamp: Long) {
         runOnUiThread {
+            if (transportStopped) return@runOnUiThread
             val address = device.address.uppercase(Locale.US)
             val sample = ScanSample(rssi, timestamp)
             scanSamples[address] = sample
@@ -395,6 +455,7 @@ class MainActivity : AppCompatActivity(),
 
     override fun onSelectedPeerConnected(address: String) {
         runOnUiThread {
+            if (transportStopped) return@runOnUiThread
             bleConnected = true
             bleState = "Connected"
             updateStatus()
@@ -421,11 +482,16 @@ class MainActivity : AppCompatActivity(),
 
     override fun onControlChannelReady(address: String) {
         runOnUiThread {
+            if (transportStopped) return@runOnUiThread
             controlReady = true
             val isHw = bleCoordinator.isHardwareReflector
             bleState = if (isHw) "Connected / Hardware Reflector" else "Connected / GATT ready"
             updateStatus()
-            binding.startCsButton.isEnabled = true
+            binding.startCsButton.isEnabled = !recording
+            if (hasActiveMeasurement() && measurementPhase == "CONNECTING" && address.equals(measurementPeer, true)) {
+                log("GATT 준비 완료 → CS 시작", "BLE")
+                startMeasurementAttempt()
+            }
             val peerType = if (isHw) "하드웨어 Reflector (Nordic 등)" else "페어링 및 제어·거리 채널"
             binding.selectedDeviceText.text = "$peerType 준비 완료: $address"
         }
@@ -438,7 +504,9 @@ class MainActivity : AppCompatActivity(),
         if (uiRole != UiRole.REFLECTOR) return
 
         runOnUiThread {
-            if (recording) { log("Duplicate START ignored", "BLE"); return@runOnUiThread }
+            if (transportStopped) return@runOnUiThread
+            if (reflectorCsActive) { log("Duplicate START ignored", "BLE"); return@runOnUiThread }
+            reflectorCsActive = true
             startCsvSession(UiRole.REFLECTOR, initiatorAddress)
             log("Initiator로부터 START 수신: $initiatorAddress")
             val controller = csController
@@ -473,36 +541,29 @@ class MainActivity : AppCompatActivity(),
     }
 
     override fun onReflectorReady(reflectorAddress: String) {
-        if (uiRole != UiRole.INITIATOR) return
-
-        val normalizedAddress = reflectorAddress.uppercase(Locale.US)
-
-        log("Reflector READY 수신 → 800 ms 후 Initiator CS 시작")
-
-        csStartHandler.removeCallbacksAndMessages(null)
-        csStartHandler.postDelayed({
-            if (uiRole != UiRole.INITIATOR || !controlReady) {
-                log("역할 또는 GATT 상태 변경으로 Initiator 시작 취소")
-                finishRecording("CS start cancelled")
-                restoreStartButton()
-                return@postDelayed
-            }
-
-            val controller = csController
-            if (controller == null) {
-                log("CS 오류: ChannelSoundingController가 초기화되지 않았습니다.")
-                finishRecording("CS start cancelled")
-                restoreStartButton()
-                return@postDelayed
-            }
-
-            if (Build.VERSION.SDK_INT >= 36) controller.startInitiator(normalizedAddress)
-        }, 800L)
+        runOnUiThread {
+            if (!hasActiveMeasurement() || measurementPhase != "READY_WAIT" ||
+                !reflectorAddress.equals(measurementPeer, true)) return@runOnUiThread
+            measurementPhase = "STARTING"
+            csStartHandler.removeCallbacksAndMessages(null)
+            log("Reflector READY 수신 → 800ms 후 CS 시작", "BLE")
+            csStartHandler.postDelayed({
+                if (!hasActiveMeasurement()) return@postDelayed
+                if (!bleConnected || !controlReady) {
+                    onError("GATT unavailable after READY")
+                    return@postDelayed
+                }
+                if (Build.VERSION.SDK_INT >= 36) csController?.startInitiator(
+                    measurementPeer!!.uppercase(Locale.US), measurementSecurity)
+            }, 800L)
+        }
     }
 
     override fun onReflectorError(message: String) {
         log("BLE 오류: $message")
-        runOnUiThread { stopEverything() }
+        runOnUiThread {
+            stopEverything(keepLog = true)
+        }
     }
 
     override fun onRemoteDistance(
@@ -510,7 +571,7 @@ class MainActivity : AppCompatActivity(),
         smoothedMeters: Double,
         sampleCount: Int
     ) {
-        if (uiRole != UiRole.REFLECTOR) return
+        if (uiRole != UiRole.REFLECTOR || !recording || transportStopped) return
 
         recorder.distance(DistanceSample(rawMeters, smoothedMeters, sampleCount,
             System.currentTimeMillis(), null, "REMOTE_RECEIPT"))
@@ -535,7 +596,7 @@ class MainActivity : AppCompatActivity(),
 
     override fun onDisconnected() {
         runOnUiThread {
-            log("Peer 연결 해제", "BLE")
+            log("Peer 연결 해제; 자동 재연결하지 않음", "BLE")
             stopEverything(keepLog = true)
         }
     }
@@ -559,6 +620,7 @@ class MainActivity : AppCompatActivity(),
     }
 
     override fun onRangingStarted(role: ChannelSoundingController.Role) {
+        if (uiRole == UiRole.INITIATOR && hasActiveMeasurement()) measurementPhase = "MEASURING"
         csState = "Measuring"
         updateStatus()
         log("CS started: $role")
@@ -571,12 +633,16 @@ class MainActivity : AppCompatActivity(),
         rssi: Int?,
         timestampEpochMs: Long
     ) {
-        if (uiRole != UiRole.INITIATOR) return
+        if (uiRole != UiRole.INITIATOR || !hasActiveMeasurement() ||
+            measurementPhase !in listOf("STARTING", "MEASURING")) return
+        sessionResultCount++
+        measurementPhase = "MEASURING"
+        csState = "Measuring"
 
         recorder.distance(DistanceSample(rawMeters, smoothedMeters, sampleCount,
             timestampEpochMs, rssi, "LOCAL_RANGING"))
         log("RANGING RSSI=${rssi?.let { "$it dBm" } ?: "N/A"} distance=$rawMeters smoothed=$smoothedMeters samples=$sampleCount", "CS")
-        runOnUiThread { rangingRssi = rssi; updateRssiUi() }
+        runOnUiThread { updateRssiUi() }
 
         runOnUiThread {
             binding.distanceText.text = String.format(
@@ -603,69 +669,38 @@ class MainActivity : AppCompatActivity(),
     }
 
     override fun onRangingStopped(role: ChannelSoundingController.Role) {
-        log("CS 절차 완료: $role")
-        if (recording && !stopping && selectedAddress != null && uiRole == UiRole.INITIATOR) {
-            log("Nordic CS 15개 절차 완료 → 세션 정리 후 연속 측정 시도...")
-            if (Build.VERSION.SDK_INT >= 36) csController?.stop()
-            csStartHandler.postDelayed({
-                if (recording && !stopping && selectedAddress != null) {
-                    val address = selectedAddress!!
-                    val securityLevel = if (binding.secLevel0Radio.isChecked) 0 else 1
-                    if (Build.VERSION.SDK_INT >= 36) {
-                        csController?.startInitiator(address.uppercase(Locale.US), securityLevel, preserveSampleCount = true)
-                    }
-                }
-            }, 300L)
-        } else {
-            stopEverything(keepLog = true)
-        }
+        if (transportStopped) return
+        log("CS stopped: role=$role results=$sessionResultCount; 모든 수집/연결 중단", "CS")
+        stopEverything(keepLog = true)
+        csState = "Stopped"
+        updateStatus()
     }
 
     override fun onError(message: String) {
-        log("CS 오류: $message")
-        finishRecording("CS error")
+        log("CS 오류: $message", "CS")
+        if (uiRole == UiRole.REFLECTOR && !transportStopped)
+            bleCoordinator.notifyReflectorFailure(message)
+        stopEverything(keepLog = true)
         csState = "Error"
         updateStatus()
-
-        if (uiRole == UiRole.REFLECTOR) {
-            bleCoordinator.notifyReflectorFailure(message)
-        } else {
-            restoreStartButton()
-        }
-        // The controller owns its failure stop; release transport on the next main turn.
-        csStartHandler.post { stopEverything(keepLog = true) }
     }
 
     override fun onClosed(reason: Int) {
-        val reasonText = if (Build.VERSION.SDK_INT >= 36) {
-            ChannelSoundingController.reasonToText(reason)
-        } else {
-            "reason=$reason"
-        }
-        log("RangingSession closed: $reasonText")
-        if (recording && !stopping && selectedAddress != null && uiRole == UiRole.INITIATOR) {
-            log("CS 세션 종료 ($reasonText) → 세션 정리 후 300ms 뒤 연속 측정 시도...")
-            if (Build.VERSION.SDK_INT >= 36) csController?.stop()
-            csStartHandler.postDelayed({
-                if (recording && !stopping && selectedAddress != null) {
-                    val address = selectedAddress!!
-                    val securityLevel = if (binding.secLevel0Radio.isChecked) 0 else 1
-                    if (Build.VERSION.SDK_INT >= 36) {
-                        csController?.startInitiator(address.uppercase(Locale.US), securityLevel, preserveSampleCount = true)
-                    }
-                }
-            }, 300L)
-        } else {
-            finishRecording("Ranging session closed ($reasonText)")
-            csStartHandler.post { stopEverything(keepLog = true) }
-        }
+        if (transportStopped || !recording) return // Ignore completion of an earlier teardown.
+        val reasonText = if (Build.VERSION.SDK_INT >= 36)
+            ChannelSoundingController.reasonToText(reason) else "reason=$reason"
+        log("RangingSession closed: $reasonText; 모든 수집/연결 중단", "CS")
+        stopEverything(keepLog = true)
+        csState = "Closed ($reasonText)"
+        updateStatus()
     }
 
     private fun restoreStartButton() {
         if (uiRole != UiRole.INITIATOR) return
 
         runOnUiThread {
-            if (selectedAddress != null || controlReady) {
+            if (!recording && !stopping && selectedAddress != null &&
+                (Build.VERSION.SDK_INT < 36 || csController?.isClosing != true)) {
                 binding.startCsButton.isEnabled = true
             }
         }
@@ -747,6 +782,8 @@ class MainActivity : AppCompatActivity(),
     }
 
     private fun log(message: String, source: String = "CS", persist: Boolean = true) {
+        // Preserve discovery/permission/start failures even before a CSV session exists.
+        Log.i("PhoneCS", "source=$source role=$uiRole $message")
         val time = SimpleDateFormat(
             "HH:mm:ss.SSS",
             Locale.US
@@ -756,14 +793,13 @@ class MainActivity : AppCompatActivity(),
 
         if (persist && ::recorder.isInitialized) recorder.event(source, message, uiRole.name)
         runOnUiThread {
-            while (logLines.size >= 100) logLines.removeFirst()
-            logLines.addLast(line)
-            if (::binding.isInitialized) {
-                binding.statusText.text = logLines.joinToString("\n")
-                binding.statusText.post {
-                    val height = binding.statusText.layout?.height ?: 0
-                    binding.statusText.scrollTo(0, (height - binding.statusText.height).coerceAtLeast(0))
-                }
+            if (isDestroyed) return@runOnUiThread
+            while (logLines.size >= 500) logLines.removeLast()
+            logLines.addFirst(line)
+            // Reflowing all 500 lines on every scan callback can starve touch input on Wear OS.
+            if (!logRenderPending) {
+                logRenderPending = true
+                logRenderHandler.postDelayed(renderLog, 500L)
             }
         }
     }

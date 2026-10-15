@@ -30,6 +30,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.os.ParcelUuid
+import android.util.Log
 import androidx.core.content.ContextCompat
 import java.nio.charset.StandardCharsets
 import java.util.UUID
@@ -40,6 +41,7 @@ class BlePeerCoordinator(
 ) {
     companion object {
         const val MIN_ADVERTISING_TX_DBM = -21
+        private val RANGING_SERVICE_UUID = ParcelUuid(UUID.fromString("0000185b-0000-1000-8000-00805f9b34fb"))
         // API 37 expands the public request range; actual applied power remains controller-owned.
         val maxAdvertisingTxDbm: Int
             get() = if (Build.VERSION.SDK_INT >= 37) AdvertisingSetParameters.TX_POWER_MAX_AVAILABLE else 1
@@ -63,6 +65,8 @@ class BlePeerCoordinator(
             sampleCount: Int
         )
 
+        fun onBlePhy(state: BlePhyState)
+
         fun onConnectionRssi(address: String, rssi: Int?, timestamp: Long)
 
         fun onDisconnected()
@@ -81,6 +85,7 @@ class BlePeerCoordinator(
     private val mainHandler = Handler(Looper.getMainLooper())
 
     private var selectedDevice: BluetoothDevice? = null
+    @Volatile private var scanning = false
 
     /* Hardware Reflector (e.g. Nordic nRF54L15 DK) 여부 */
     var isHardwareReflector: Boolean = false
@@ -90,10 +95,77 @@ class BlePeerCoordinator(
         get() = controlCharacteristic != null
 
     val isGattConnected: Boolean
-        get() = clientGatt != null
+        get() = clientConnected
+
+    private var clientConnected = false
 
     /* Initiator 쪽 GATT client */
     private var clientGatt: BluetoothGatt? = null
+    private var requestedPhy: BlePhyChoice? = null
+    private var phyReadyGatt: BluetoothGatt? = null
+    private var actualPhy = BlePhyState()
+
+    fun selectPhy(choice: BlePhyChoice) {
+        mainHandler.post {
+            requestedPhy = choice
+            actualPhy = actualPhy.copy(requested = choice.csv)
+            listener.onBlePhy(actualPhy)
+            val gatt = phyReadyGatt
+            if (gatt != null && clientGatt === gatt) requestPreferredPhy(gatt)
+            else listener.onLog("PHY 선택: ${choice.label}; 기존 GATT 준비 후 요청")
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun requestPreferredPhy(gatt: BluetoothGatt) {
+        val choice = requestedPhy ?: return // Preserve platform defaults until explicitly selected.
+        if (clientGatt !== gatt || !hasBlePermissions()) return
+        if (choice == BlePhyChoice.LE_2M && !adapter.isLe2MPhySupported ||
+            choice in listOf(BlePhyChoice.LE_CODED_S2, BlePhyChoice.LE_CODED_S8) && !adapter.isLeCodedPhySupported) {
+            listener.onLog("PHY 요청 불가: 로컬 기기가 ${choice.label}를 지원하지 않습니다.")
+            return
+        }
+        val mask = when (choice) {
+            BlePhyChoice.LE_1M -> BluetoothDevice.PHY_LE_1M_MASK
+            BlePhyChoice.LE_2M -> BluetoothDevice.PHY_LE_2M_MASK
+            else -> BluetoothDevice.PHY_LE_CODED_MASK
+        }
+        val options = when (choice) {
+            BlePhyChoice.LE_CODED_S2 -> BluetoothDevice.PHY_OPTION_S2
+            BlePhyChoice.LE_CODED_S8 -> BluetoothDevice.PHY_OPTION_S8
+            else -> BluetoothDevice.PHY_OPTION_NO_PREFERRED
+        }
+        try {
+            gatt.setPreferredPhy(mask, mask, options)
+            listener.onLog("PHY 요청: ${choice.label}; 실제 결과는 onPhyUpdate에서 확인")
+        } catch (e: Exception) { listener.onLog("PHY 요청 실패: ${e.message}") }
+    }
+
+    private fun onPhyReady(gatt: BluetoothGatt) {
+        mainHandler.post {
+            if (clientGatt !== gatt) return@post
+            phyReadyGatt = gatt
+            requestPreferredPhy(gatt)
+        }
+    }
+
+    private fun clearPhy() {
+        phyReadyGatt = null
+        actualPhy = BlePhyState(requested = requestedPhy?.csv)
+        listener.onBlePhy(actualPhy)
+    }
+
+    private fun reportPhy(txPhy: Int, rxPhy: Int, status: Int) {
+        if (status != BluetoothGatt.GATT_SUCCESS) {
+            listener.onLog("PHY 결과 실패: status=$status; 기존 확인값 유지")
+            return
+        }
+        actualPhy = BlePhyState(BlePhyState.label(txPhy), BlePhyState.label(rxPhy),
+            requestedPhy?.csv, System.currentTimeMillis())
+        listener.onBlePhy(actualPhy)
+        listener.onLog("PHY 실제: TX=${actualPhy.tx} RX=${actualPhy.rx}; 요청=${actualPhy.requested}")
+    }
+
     private var rssiGatt: BluetoothGatt? = null
     private var rssiRequestPending = false
     private val rssiPoll = object : Runnable {
@@ -196,22 +268,27 @@ class BlePeerCoordinator(
 
         val settings = ScanSettings.Builder()
             .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+            // Silicon Labs CS Reflector demos use extended advertising.
+            .setLegacy(!adapter.isLeExtendedAdvertisingSupported)
             .build()
 
+        scanning = true
         adapter.bluetoothLeScanner?.startScan(
             emptyList(),
             settings,
             scanCallback
         ) ?: run {
+            scanning = false
             listener.onReflectorError("BLE scanner를 사용할 수 없습니다.")
             return
         }
 
-        listener.onLog("Reflector 스캔 시작 ('Reflector' 필터 적용)")
+        listener.onLog("Reflector 스캔 시작 (Reflector / CS RFLCT / RAS / Phone CS)")
     }
 
     @SuppressLint("MissingPermission")
     fun stopScan() {
+        scanning = false
         try {
             adapter.bluetoothLeScanner?.stopScan(scanCallback)
         } catch (_: Exception) {
@@ -514,6 +591,7 @@ class BlePeerCoordinator(
 
     @SuppressLint("MissingPermission")
     private fun closeClientGatt() {
+        clearPhy()
         stopConnectionRssi()
         cancelPendingDiscovery()
         clearWriteQueue()
@@ -521,6 +599,7 @@ class BlePeerCoordinator(
         isHardwareReflector = false
         val gatt = clientGatt
 
+        clientConnected = false
         clientGatt = null
         controlCharacteristic = null
         statusCharacteristic = null
@@ -544,8 +623,10 @@ class BlePeerCoordinator(
         clearWriteQueue()
 
         if (clientGatt === gatt) {
+            clearPhy()
             stopConnectionRssi()
             isHardwareReflector = false
+            clientConnected = false
             clientGatt = null
             controlCharacteristic = null
             statusCharacteristic = null
@@ -561,6 +642,7 @@ class BlePeerCoordinator(
 
     @SuppressLint("MissingPermission")
     private fun closeServer() {
+        clearPhy()
         advertisingService = null
         appliedTxPower = null
         stopAdvertisingOnly()
@@ -716,16 +798,22 @@ class BlePeerCoordinator(
     private val scanCallback = object : ScanCallback() {
         @SuppressLint("MissingPermission")
         override fun onScanResult(callbackType: Int, result: ScanResult) {
+            if (!scanning) return
             val device = result.device
             val scanRecord = result.scanRecord
             val rawName = scanRecord?.deviceName ?: device.name
 
             val serviceUuids = scanRecord?.serviceUuids
             val isPhoneCs = serviceUuids?.contains(ParcelUuid(CsProtocol.SERVICE_UUID)) == true
-            val isReflectorName = rawName != null && rawName.contains("Reflector", ignoreCase = true)
+            val isRas = serviceUuids?.contains(RANGING_SERVICE_UUID) == true
+            val isReflectorName = rawName != null &&
+                (rawName.contains("Reflector", ignoreCase = true) || rawName.equals("CS RFLCT", ignoreCase = true))
+            val accepted = isReflectorName || isRas || isPhoneCs
+            Log.d("PhoneCS.Scan", "address=${device.address} name=$rawName rssi=${result.rssi} " +
+                "serviceUuids=$serviceUuids legacy=${result.isLegacy} accepted=$accepted")
 
-            // Only report devices named 'Reflector' or advertising Phone CS service
-            if (!isReflectorName && !isPhoneCs) {
+            // Include standard RAS reflectors and the Silicon Labs demo's advertised name.
+            if (!accepted) {
                 return
             }
 
@@ -747,11 +835,25 @@ class BlePeerCoordinator(
         }
 
         override fun onScanFailed(errorCode: Int) {
+            if (!scanning) return
+            scanning = false
             listener.onReflectorError("BLE scan 실패: $errorCode")
         }
     }
 
     private val clientGattCallback = object : BluetoothGattCallback() {
+        override fun onPhyUpdate(gatt: BluetoothGatt, txPhy: Int, rxPhy: Int, status: Int) {
+            mainHandler.post {
+                if (clientGatt === gatt) reportPhy(txPhy, rxPhy, status)
+            }
+        }
+
+        override fun onPhyRead(gatt: BluetoothGatt, txPhy: Int, rxPhy: Int, status: Int) {
+            mainHandler.post {
+                if (clientGatt === gatt) reportPhy(txPhy, rxPhy, status)
+            }
+        }
+
         override fun onReadRemoteRssi(gatt: BluetoothGatt, rssi: Int, status: Int) {
             val timestamp = System.currentTimeMillis()
             mainHandler.post {
@@ -771,8 +873,8 @@ class BlePeerCoordinator(
         ) {
             if (clientGatt !== gatt) return // A closed connection must not end a newer session.
             if (status != BluetoothGatt.GATT_SUCCESS) {
-                listener.onReflectorError("GATT 오류 status=$status")
                 releaseClientGattFromCallback(gatt)
+                listener.onReflectorError("GATT 오류 status=$status")
                 listener.onDisconnected()
                 return
             }
@@ -780,11 +882,18 @@ class BlePeerCoordinator(
             when (newState) {
                 BluetoothProfile.STATE_CONNECTED -> {
                     clientGatt = gatt
+                    clientConnected = true
                     serviceDiscoveryRequested = false
 
                     listener.onSelectedPeerConnected(gatt.device.address)
                     listener.onLog("GATT 연결 성공")
                     startConnectionRssi(gatt)
+                    mainHandler.post {
+                        if (clientGatt === gatt && hasBlePermissions()) {
+                            try { gatt.readPhy() }
+                            catch (e: Exception) { listener.onLog("PHY 읽기 실패: ${e.message}") }
+                        }
+                    }
 
                     when (gatt.device.bondState) {
                         BluetoothDevice.BOND_BONDED -> {
@@ -820,10 +929,20 @@ class BlePeerCoordinator(
         override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
             if (clientGatt !== gatt) return
             serviceDiscoveryRequested = false
+            listener.onLog("GATT services discovered address=${gatt.device.address} status=$status")
 
             if (status != BluetoothGatt.GATT_SUCCESS) {
                 listener.onReflectorError("서비스 탐색 실패: $status")
                 return
+            }
+
+            gatt.services.forEach { discoveredService ->
+                listener.onLog("GATT service uuid=${discoveredService.uuid} type=${discoveredService.type}")
+                discoveredService.characteristics.forEach { characteristic ->
+                    listener.onLog("GATT characteristic service=${discoveredService.uuid} uuid=${characteristic.uuid} " +
+                        "properties=0x${characteristic.properties.toString(16)} " +
+                        "descriptors=${characteristic.descriptors.map { it.uuid }}")
+                }
             }
 
             val service = gatt.getService(CsProtocol.SERVICE_UUID)
@@ -831,6 +950,7 @@ class BlePeerCoordinator(
             if (service == null) {
                 isHardwareReflector = true
                 listener.onLog("Phone CS 서비스 없음 - 하드웨어 CS Reflector (Nordic 등) 감지됨")
+                onPhyReady(gatt)
                 listener.onControlChannelReady(gatt.device.address)
                 return
             }
@@ -908,6 +1028,7 @@ class BlePeerCoordinator(
             if (descriptor.uuid != CsProtocol.CCCD_UUID) return
 
             if (status == BluetoothGatt.GATT_SUCCESS) {
+                onPhyReady(gatt)
                 listener.onControlChannelReady(gatt.device.address)
             } else {
                 listener.onReflectorError("알림 설정 실패: $status")
@@ -975,6 +1096,18 @@ class BlePeerCoordinator(
     }
 
     private val serverCallback = object : BluetoothGattServerCallback() {
+        override fun onPhyUpdate(device: BluetoothDevice, txPhy: Int, rxPhy: Int, status: Int) {
+            mainHandler.post {
+                if (serverConnectedDevice == device) reportPhy(txPhy, rxPhy, status)
+            }
+        }
+
+        override fun onPhyRead(device: BluetoothDevice, txPhy: Int, rxPhy: Int, status: Int) {
+            mainHandler.post {
+                if (serverConnectedDevice == device) reportPhy(txPhy, rxPhy, status)
+            }
+        }
+
         @SuppressLint("MissingPermission")
         override fun onServiceAdded(
             status: Int,
@@ -1003,6 +1136,12 @@ class BlePeerCoordinator(
             when (newState) {
                 BluetoothProfile.STATE_CONNECTED -> {
                     serverConnectedDevice = device
+                    mainHandler.post {
+                        if (serverConnectedDevice == device && hasBlePermissions()) {
+                            try { gattServer?.readPhy(device) }
+                            catch (e: Exception) { listener.onLog("PHY 읽기 실패: ${e.message}") }
+                        }
+                    }
                     notificationsEnabled = false
 
                     listener.onSelectedPeerConnected(device.address)
@@ -1013,6 +1152,7 @@ class BlePeerCoordinator(
                 }
 
                 BluetoothProfile.STATE_DISCONNECTED -> {
+                    clearPhy()
                     serverConnectedDevice = null
                     notificationsEnabled = false
                     listener.onDisconnected()

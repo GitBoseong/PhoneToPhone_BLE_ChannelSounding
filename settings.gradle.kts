@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "PhoneToPhoneChannelSounding"
+rootProject.name = "BLEChannelSounding"
 include(":app")

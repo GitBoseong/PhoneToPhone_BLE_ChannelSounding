@@ -18,6 +18,7 @@ class MeasurementRecorder(context: Context, private val status: (String) -> Unit
     private var imuEnabled = true
     private var gpsEnabled = true
     private var tx = TxPowerState()
+    private var phy = BlePhyState()
     private val pending = PendingMeasurements()
     private val history = ArrayDeque<Event>()
     private var droppedHistory = 0
@@ -53,6 +54,7 @@ class MeasurementRecorder(context: Context, private val status: (String) -> Unit
     }
     fun setRole(value: String) = submit { role = value }
     fun setTx(value: TxPowerState) = submit { tx = value }
+    fun setPhy(value: BlePhyState) = submit { phy = value }
     fun setImuEnabled(value: Boolean) = submit {
         imuEnabled = value
         if (active && value) sensors.start() else sensors.stop()
@@ -108,7 +110,7 @@ class MeasurementRecorder(context: Context, private val status: (String) -> Unit
         val now = System.currentTimeMillis()
         val fields = MeasurementCsv.row(now, (nanos - startNanos) / 1_000_000.0, role, peer,
             pending.distances.removeFirstOrNull(), pending.scans.removeFirstOrNull(), tx, gps.poll(),
-            if (imuEnabled && kind == "SAMPLE") sensors.snapshot() else ImuSnapshot(), kind, nanos, pending.connections.removeFirstOrNull())
+            if (imuEnabled && kind == "SAMPLE") sensors.snapshot() else ImuSnapshot(), kind, nanos, pending.connections.removeFirstOrNull(), phy)
         logger.data(fields)
         if (kind == "SAMPLE") {
             if (sampleCount == 0L) firstNanos = nanos

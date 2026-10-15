@@ -1,4 +1,4 @@
-package com.example.ble6_channelsounding
+ package com.example.ble6_channelsounding
 
 import java.time.Instant
 import java.time.ZoneId
@@ -46,7 +46,8 @@ object MeasurementCsv {
         "acc_timestamp_epoch_ms", "gyro_timestamp_epoch_ms", "mag_timestamp_epoch_ms",
         "game_rv_timestamp_epoch_ms", "pressure_timestamp_epoch_ms", "rssi_timestamp_epoch_ms",
         "distance_source", "row_kind", "record_elapsed_realtime_ns",
-        "connection_rssi_dbm", "connection_rssi_timestamp_epoch_ms"
+        "connection_rssi_dbm", "connection_rssi_timestamp_epoch_ms",
+        "ble_phy", "ble_tx_phy", "ble_rx_phy", "ble_phy_requested", "ble_phy_timestamp_epoch_ms"
     )
     private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
     fun iso(epoch: Long): String = formatter.format(Instant.ofEpochMilli(epoch).atZone(ZoneId.systemDefault()))
@@ -63,7 +64,7 @@ object MeasurementCsv {
 
     fun row(now: Long, elapsedMs: Double, role: String, peer: String?, distance: DistanceSample?,
             scan: ScanSample?, tx: TxPowerState, gps: GpsFix?, imu: ImuSnapshot,
-            kind: String, elapsedNanos: Long, connection: ConnectionRssiSample? = null): List<Any?> = buildList {
+            kind: String, elapsedNanos: Long, connection: ConnectionRssiSample? = null, phy: BlePhyState = BlePhyState()): List<Any?> = buildList {
         addAll(listOf(iso(now), now, elapsedMs, role, peer,
             distance?.raw, distance?.smoothed, distance?.count, distance?.timestamp,
             scan?.rssi, distance?.rssi, tx.mode, tx.requested, tx.applied, tx.advertised,
@@ -73,7 +74,8 @@ object MeasurementCsv {
         }
         addAll(listOf(imu.acc?.timestamp, imu.gyro?.timestamp, imu.mag?.timestamp,
             imu.rotation?.timestamp, imu.pressure?.timestamp, scan?.timestamp,
-            distance?.source, kind, elapsedNanos, connection?.rssi, connection?.timestamp))
+            distance?.source, kind, elapsedNanos, connection?.rssi, connection?.timestamp,
+            phy.actual, phy.tx, phy.rx, phy.requested, phy.timestamp))
     }
 }
 

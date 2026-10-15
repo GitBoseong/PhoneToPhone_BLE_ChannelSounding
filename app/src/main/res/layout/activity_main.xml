@@ -39,6 +39,8 @@
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp" android:layout_marginTop="12dp" android:background="@drawable/panel_background">
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="BLE Control" android:textSize="16sp" android:textColor="#172B3A" android:textStyle="bold" android:layout_marginBottom="8dp"/>
             <LinearLayout android:id="@+id/initiatorPanel" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
+                <Button android:id="@+id/phySelectButton" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="BLE PHY 선택 · 요청: Default" android:textAllCaps="false"/>
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="LE Coded의 S=2/S=8은 요청 옵션입니다. 실제 코딩률은 확인할 수 없습니다." android:textSize="12sp" android:textColor="#172B3A"/>
                 <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Target Reflector Type" android:textSize="14sp" android:textColor="#172B3A" android:textStyle="bold" android:layout_marginTop="4dp"/>
                 <RadioGroup android:id="@+id/peerTypeGroup" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
                     <RadioButton android:id="@+id/phoneCsPeerRadio" android:layout_width="wrap_content" android:layout_height="48dp" android:checked="true" android:text="Phone CS"/>
@@ -64,18 +66,26 @@
                 <Button android:id="@+id/advertiseButton" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Start Advertising" android:textAllCaps="false"/>
                 <TextView android:id="@+id/reflectorPeerText" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="연결된 Initiator: -" android:textSize="14sp" android:textColor="#172B3A"/>
             </LinearLayout>
+            <TextView android:id="@+id/phyStatusText" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="실제 PHY: TX=- / RX=-" android:textSize="14sp" android:textColor="#172B3A"/>
             <Button android:id="@+id/stopButton" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="중지 / 연결 해제 · Stop Advertising" android:textAllCaps="false"/>
         </LinearLayout>
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp" android:layout_marginTop="12dp" android:background="@drawable/panel_background">
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Measurement" android:textSize="16sp" android:textColor="#172B3A" android:textStyle="bold" android:layout_marginBottom="8dp"/>
             <TextView android:id="@+id/distanceText" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="--.--- m" android:textSize="44sp" android:textColor="#172B3A" android:gravity="center" android:textStyle="bold" android:padding="12dp"/>
             <TextView android:id="@+id/rawDistanceText" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Raw: - / Smoothed: - / Samples: 0" android:textSize="14sp" android:textColor="#172B3A" android:gravity="center"/>
-            <TextView android:id="@+id/rssiText" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Connection RSSI: - / Ranging RSSI: -" android:textSize="14sp" android:textColor="#172B3A" android:gravity="center" android:layout_marginTop="8dp"/>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="8dp">
+                <TextView android:id="@+id/rssiText" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="Connection RSSI: -" android:textSize="14sp" android:textColor="#172B3A"/>
+                <com.example.ble6_channelsounding.RssiColorBarView android:id="@+id/rssiColorBar" android:layout_width="110dp" android:layout_height="200dp" android:importantForAccessibility="yes" android:contentDescription="Connection RSSI 없음"/>
+            </LinearLayout>
             <TextView android:id="@+id/recordingText" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="CS 시작 시 LOG + DATA 기록 · Download/PhoneCS" android:textSize="12sp" android:textColor="#172B3A" android:layout_marginTop="12dp"/>
         </LinearLayout>
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp" android:layout_marginTop="12dp" android:background="@drawable/panel_background">
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Log" android:textSize="16sp" android:textColor="#172B3A" android:textStyle="bold" android:layout_marginBottom="8dp"/>
-            <TextView android:id="@+id/statusText" android:layout_width="match_parent" android:layout_height="160dp" android:scrollbars="vertical" android:gravity="bottom" android:text="앱 시작" android:textSize="12sp" android:fontFamily="monospace" android:textIsSelectable="true"/>
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="최신순 로그 · 위아래로 스크롤" android:textSize="12sp" android:textColor="#526675" android:layout_marginBottom="6dp"/>
+            <TextView android:id="@+id/latestLogText" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="최신 로그: 앱 시작" android:textSize="12sp" android:textColor="#172B3A" android:layout_marginBottom="6dp"/>
+            <com.example.ble6_channelsounding.LogScrollView android:id="@+id/logScroll" android:layout_width="match_parent" android:layout_height="200dp" android:scrollbars="vertical" android:fadeScrollbars="false" android:fillViewport="true">
+                <TextView android:id="@+id/statusText" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="top" android:text="앱 시작" android:textSize="12sp" android:fontFamily="monospace" android:textIsSelectable="true" android:padding="4dp"/>
+            </com.example.ble6_channelsounding.LogScrollView>
         </LinearLayout>
     </LinearLayout>
 </ScrollView>
